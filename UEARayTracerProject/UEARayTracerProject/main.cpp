@@ -5,6 +5,7 @@
 #include <CL/opencl.h>
 #include <iostream>
 #include <fstream>
+#include "cl_helper.h"
 
 #define WINDOW_WIDTH (1280)
 #define WINDOW_HEIGHT (720)
@@ -57,6 +58,11 @@ int main(void) {
 	
 	if (!initGL()) {
 		std::cout << "Failed to initialise OpenGL." << std::endl;
+		return -1;
+	}
+
+	if (!cl::init(true)) {
+		std::cout << "Failed to initialise OpenCL." << std::endl;
 		return -1;
 	}
 
