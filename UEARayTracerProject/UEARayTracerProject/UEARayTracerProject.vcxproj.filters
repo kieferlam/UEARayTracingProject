@@ -27,4 +27,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="cl_kernels\tracer.cl">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

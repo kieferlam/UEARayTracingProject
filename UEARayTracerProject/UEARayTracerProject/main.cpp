@@ -5,6 +5,8 @@
 #include <CL/opencl.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <sstream>
 #include "cl_helper.h"
 
 #define WINDOW_WIDTH (1280)
@@ -12,8 +14,15 @@
 
 GLFWwindow* window;
 
+cl_kernel tracerKernel;
+
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+}
+
+std::string readFile(const std::string& path) {
+	std::ifstream file(path);
+	return std::string(std::istreambuf_iterator<char>(file), (std::istreambuf_iterator<char>()));
 }
 
 bool initGL() {
@@ -54,6 +63,18 @@ bool initGL() {
 	return true;
 }
 
+bool buildCL() {
+	// Add sources
+	std::string tracerSrc = readFile("cl_kernels/tracer.cl");
+	cl::addSource(tracerSrc);
+
+	// Build
+	if (!cl::build()) {
+		return false;
+	}
+	return true;
+}
+
 int main(void) {
 	
 	if (!initGL()) {
@@ -63,6 +84,22 @@ int main(void) {
 
 	if (!cl::init(true)) {
 		std::cout << "Failed to initialise OpenCL." << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	// Load and build OpenCL kernel sources
+	if (!buildCL()) {
+		std::cout << "Could not build OpenCL program." << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	// Create the kernel
+	tracerKernel = cl::createKernel("TracerMain");
+	if (tracerKernel == nullptr) {
+		std::cout << "Could not create OpenCL kernel." << std::endl;
+		glfwTerminate();
 		return -1;
 	}
 

@@ -15,7 +15,10 @@ std::string getErrorString(cl_int errorCode) {
 		CL_COMPILER_NOT_AVAILABLE,
 		CL_BUILD_PROGRAM_FAILURE,
 		CL_INVALID_QUEUE_PROPERTIES,
-		CL_OUT_OF_RESOURCES
+		CL_OUT_OF_RESOURCES,
+		CL_INVALID_PROGRAM_EXECUTABLE,
+		CL_INVALID_KERNEL_NAME,
+		CL_INVALID_KERNEL_DEFINITION
 	};
 	const std::string errStrings[] = {
 		"CL_INVALID_CONTEXT",
@@ -29,7 +32,10 @@ std::string getErrorString(cl_int errorCode) {
 		"CL_COMPILER_NOT_AVAILABLE",
 		"CL_BUILD_PROGRAM_FAILURE",
 		"CL_INVALID_QUEUE_PROPERTIES",
-		"CL_OUT_OF_RESOURCES"
+		"CL_OUT_OF_RESOURCES",
+		"CL_INVALID_PROGRAM_EXECUTABLE",
+		"CL_INVALID_KERNEL_NAME",
+		"CL_INVALID_KERNEL_DEFINITION"
 	};
 	for (int i = 0; i < sizeof(errCodes) / sizeof(errCodes[0]); ++i) {
 		if (errCodes[i] == errorCode) return errStrings[i];
@@ -176,5 +182,13 @@ namespace cl {
 		std::cout << buildLog << std::endl;
 
 		return false;
+	}
+
+	cl_kernel createKernel(const char* kernelName) {
+		cl_int err;
+		cl_kernel kernel = clCreateKernel(program, kernelName, &err);
+		if (err == NULL) return kernel;
+		std::cout << "Kernel creation error on '" << kernelName << "': " << getErrorString(err) << std::endl;
+		return nullptr;
 	}
 }

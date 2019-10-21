@@ -28,4 +28,6 @@ namespace cl {
 
 	bool build();
 
+	cl_kernel createKernel(const char* kernelName);
+
 }
