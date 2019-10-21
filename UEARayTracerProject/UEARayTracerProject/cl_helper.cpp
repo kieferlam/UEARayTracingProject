@@ -1,5 +1,42 @@
 #include "cl_helper.h"
 
+
+std::string getErrorString(cl_int errorCode) {
+	if (errorCode == NULL) return "NO_ERROR";
+	const cl_int errCodes[] = {
+		CL_INVALID_CONTEXT,
+		CL_INVALID_VALUE,
+		CL_OUT_OF_HOST_MEMORY,
+		CL_INVALID_PROGRAM,
+		CL_INVALID_DEVICE,
+		CL_INVALID_BINARY,
+		CL_INVALID_BUILD_OPTIONS,
+		CL_INVALID_OPERATION,
+		CL_COMPILER_NOT_AVAILABLE,
+		CL_BUILD_PROGRAM_FAILURE,
+		CL_INVALID_QUEUE_PROPERTIES,
+		CL_OUT_OF_RESOURCES
+	};
+	const std::string errStrings[] = {
+		"CL_INVALID_CONTEXT",
+		"CL_INVALID_VALUE",
+		"CL_OUT_OF_HOST_MEMORY",
+		"CL_INVALID_PROGRAM",
+		"CL_INVALID_DEVICE",
+		"CL_INVALID_BINARY",
+		"CL_INVALID_BUILD_OPTIONS",
+		"CL_INVALID_OPERATION",
+		"CL_COMPILER_NOT_AVAILABLE",
+		"CL_BUILD_PROGRAM_FAILURE",
+		"CL_INVALID_QUEUE_PROPERTIES",
+		"CL_OUT_OF_RESOURCES"
+	};
+	for (int i = 0; i < sizeof(errCodes) / sizeof(errCodes[0]); ++i) {
+		if (errCodes[i] == errorCode) return errStrings[i];
+	}
+	return "UNKNOWN_ERROR_CODE";
+}
+
 cl_platform_id retrievePlatform() {
 	cl_platform_id platforms[MAX_PLATFORMS];
 	cl_uint numPlatforms;
@@ -50,9 +87,17 @@ cl_device_id retrieveDevice(cl_platform_id platform) {
 
 namespace cl {
 
+	// Externs
 	cl_platform_id platform;
 	cl_device_id device;
 	cl_context context;
+
+	cl_program program;
+	cl_command_queue queue;
+
+	// Local
+	std::vector<const char*> sources;
+	std::vector<size_t> sourceLengths;
 
 	bool init(bool interop) {
 		platform = retrievePlatform();
@@ -101,5 +146,35 @@ namespace cl {
 
 		return false;
 
+	}
+
+	void addSource(const std::string& source) {
+		sources.push_back(source.c_str());
+		sourceLengths.push_back(source.length());
+	}
+
+	bool build() {
+		cl_int err;
+		program = clCreateProgramWithSource(context, sources.size(), &sources[0], &sourceLengths[0], &err);
+		if (err != NULL) {
+			std::cout << "Program creation error: " << getErrorString(err) << std::endl;
+		}
+
+		err = clBuildProgram(program, 1, &device, BUILD_OPTIONS, NULL, NULL);
+		if (err == CL_SUCCESS) {
+			queue = clCreateCommandQueueWithProperties(context, device, NULL, &err);
+			if (err == NULL) return true;
+			std::cout << "Could not create command queue: " << getErrorString(err) << std::endl;
+			return false;
+		}
+
+		// IF BUILD FAILS
+		std::cout << "Build error: " << getErrorString(err) << std::endl;
+
+		char buildLog[2048];
+		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 2048, buildLog, NULL);
+		std::cout << buildLog << std::endl;
+
+		return false;
 	}
 }
