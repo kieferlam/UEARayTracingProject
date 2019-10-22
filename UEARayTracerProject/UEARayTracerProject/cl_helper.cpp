@@ -1,48 +1,5 @@
 #include "cl_helper.h"
 
-
-std::string getErrorString(cl_int errorCode) {
-	if (errorCode == NULL) return "NO_ERROR";
-	const cl_int errCodes[] = {
-		CL_INVALID_CONTEXT,
-		CL_INVALID_VALUE,
-		CL_OUT_OF_HOST_MEMORY,
-		CL_INVALID_PROGRAM,
-		CL_INVALID_DEVICE,
-		CL_INVALID_BINARY,
-		CL_INVALID_BUILD_OPTIONS,
-		CL_INVALID_OPERATION,
-		CL_COMPILER_NOT_AVAILABLE,
-		CL_BUILD_PROGRAM_FAILURE,
-		CL_INVALID_QUEUE_PROPERTIES,
-		CL_OUT_OF_RESOURCES,
-		CL_INVALID_PROGRAM_EXECUTABLE,
-		CL_INVALID_KERNEL_NAME,
-		CL_INVALID_KERNEL_DEFINITION
-	};
-	const std::string errStrings[] = {
-		"CL_INVALID_CONTEXT",
-		"CL_INVALID_VALUE",
-		"CL_OUT_OF_HOST_MEMORY",
-		"CL_INVALID_PROGRAM",
-		"CL_INVALID_DEVICE",
-		"CL_INVALID_BINARY",
-		"CL_INVALID_BUILD_OPTIONS",
-		"CL_INVALID_OPERATION",
-		"CL_COMPILER_NOT_AVAILABLE",
-		"CL_BUILD_PROGRAM_FAILURE",
-		"CL_INVALID_QUEUE_PROPERTIES",
-		"CL_OUT_OF_RESOURCES",
-		"CL_INVALID_PROGRAM_EXECUTABLE",
-		"CL_INVALID_KERNEL_NAME",
-		"CL_INVALID_KERNEL_DEFINITION"
-	};
-	for (int i = 0; i < sizeof(errCodes) / sizeof(errCodes[0]); ++i) {
-		if (errCodes[i] == errorCode) return errStrings[i];
-	}
-	return "UNKNOWN_ERROR_CODE";
-}
-
 cl_platform_id retrievePlatform() {
 	cl_platform_id platforms[MAX_PLATFORMS];
 	cl_uint numPlatforms;
@@ -104,6 +61,49 @@ namespace cl {
 	// Local
 	std::vector<const char*> sources;
 	std::vector<size_t> sourceLengths;
+
+
+	std::string getErrorString(cl_int errorCode) {
+		if (errorCode == NULL) return "NO_ERROR";
+		const cl_int errCodes[] = {
+			CL_INVALID_CONTEXT,
+			CL_INVALID_VALUE,
+			CL_OUT_OF_HOST_MEMORY,
+			CL_INVALID_PROGRAM,
+			CL_INVALID_DEVICE,
+			CL_INVALID_BINARY,
+			CL_INVALID_BUILD_OPTIONS,
+			CL_INVALID_OPERATION,
+			CL_COMPILER_NOT_AVAILABLE,
+			CL_BUILD_PROGRAM_FAILURE,
+			CL_INVALID_QUEUE_PROPERTIES,
+			CL_OUT_OF_RESOURCES,
+			CL_INVALID_PROGRAM_EXECUTABLE,
+			CL_INVALID_KERNEL_NAME,
+			CL_INVALID_KERNEL_DEFINITION
+		};
+		const std::string errStrings[] = {
+			"CL_INVALID_CONTEXT",
+			"CL_INVALID_VALUE",
+			"CL_OUT_OF_HOST_MEMORY",
+			"CL_INVALID_PROGRAM",
+			"CL_INVALID_DEVICE",
+			"CL_INVALID_BINARY",
+			"CL_INVALID_BUILD_OPTIONS",
+			"CL_INVALID_OPERATION",
+			"CL_COMPILER_NOT_AVAILABLE",
+			"CL_BUILD_PROGRAM_FAILURE",
+			"CL_INVALID_QUEUE_PROPERTIES",
+			"CL_OUT_OF_RESOURCES",
+			"CL_INVALID_PROGRAM_EXECUTABLE",
+			"CL_INVALID_KERNEL_NAME",
+			"CL_INVALID_KERNEL_DEFINITION"
+		};
+		for (int i = 0; i < sizeof(errCodes) / sizeof(errCodes[0]); ++i) {
+			if (errCodes[i] == errorCode) return errStrings[i];
+		}
+		return "UNKNOWN_ERROR_CODE";
+	}
 
 	bool init(bool interop) {
 		platform = retrievePlatform();

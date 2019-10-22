@@ -14,7 +14,9 @@ class TracerKernel {
 
 	cl_mem outputImageBuffer;
 
-	struct {} kernelInputStruct;
+	struct {
+
+	} kernelInputStruct;
 
 public:
 

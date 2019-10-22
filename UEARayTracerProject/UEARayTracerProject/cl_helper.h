@@ -22,6 +22,8 @@ namespace cl {
 
 	extern cl_command_queue queue;
 
+	std::string getErrorString(cl_int errorCode);
+
 	bool init(bool interop);
 
 	void addSource(const std::string& source);
