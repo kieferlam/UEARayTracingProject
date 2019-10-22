@@ -20,7 +20,7 @@ bool TracerKernel::create(GLuint texture) {
 	// Image output buffer
 	outputImageBuffer = clCreateFromGLTexture(cl::context, CL_MEM_READ_WRITE, GL_TEXTURE_2D, 0, texture, &err);
 	if (err != NULL) {
-		std::cout << "Error creating kernel parameter buffer: " << cl::getErrorString(err) << std::endl;
+		std::cout << "Error creating kernel image output buffer: " << cl::getErrorString(err) << std::endl;
 	}
 
 	// Set kernel parameters

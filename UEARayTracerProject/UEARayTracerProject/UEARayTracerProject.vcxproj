@@ -138,9 +138,11 @@
   <ItemGroup>
     <ClCompile Include="cl_helper.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TracerKernel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cl_helper.h" />
+    <ClInclude Include="TracerKernel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cl_kernels\tracer.cl" />

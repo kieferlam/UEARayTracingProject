@@ -8,13 +8,18 @@
 #include <string>
 #include <sstream>
 #include "cl_helper.h"
+#include "TracerKernel.h"
 
 #define WINDOW_WIDTH (1280)
 #define WINDOW_HEIGHT (720)
+#define IMAGE_WIDTH (1280)
+#define IMAGE_HEIGHT (720)
 
 GLFWwindow* window;
 
-cl_kernel tracerKernel;
+TracerKernel kernel;
+
+GLuint outputTexture;
 
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
@@ -75,6 +80,18 @@ bool buildCL() {
 	return true;
 }
 
+GLuint createEmptyTexture(int width, int height) {
+	GLuint handle;
+	glGenTextures(1, &handle);
+
+	glBindTexture(GL_TEXTURE_2D, handle);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	return handle;
+}
+
 int main(void) {
 	
 	if (!initGL()) {
@@ -95,10 +112,12 @@ int main(void) {
 		return -1;
 	}
 
+	// Create empty texture for kernel output
+	outputTexture = createEmptyTexture(IMAGE_WIDTH, IMAGE_HEIGHT);
+
 	// Create the kernel
-	tracerKernel = cl::createKernel("TracerMain");
-	if (tracerKernel == nullptr) {
-		std::cout << "Could not create OpenCL kernel." << std::endl;
+	if (!kernel.create(outputTexture)) {
+		std::cout << "Failed to create kernel." << std::endl;
 		glfwTerminate();
 		return -1;
 	}

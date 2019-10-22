@@ -80,7 +80,9 @@ namespace cl {
 			CL_OUT_OF_RESOURCES,
 			CL_INVALID_PROGRAM_EXECUTABLE,
 			CL_INVALID_KERNEL_NAME,
-			CL_INVALID_KERNEL_DEFINITION
+			CL_INVALID_KERNEL_DEFINITION,
+			CL_INVALID_GL_OBJECT,
+			CL_INVALID_IMAGE_FORMAT_DESCRIPTOR
 		};
 		const std::string errStrings[] = {
 			"CL_INVALID_CONTEXT",
@@ -97,7 +99,9 @@ namespace cl {
 			"CL_OUT_OF_RESOURCES",
 			"CL_INVALID_PROGRAM_EXECUTABLE",
 			"CL_INVALID_KERNEL_NAME",
-			"CL_INVALID_KERNEL_DEFINITION"
+			"CL_INVALID_KERNEL_DEFINITION",
+			"CL_INVALID_GL_OBJECT",
+			"CL_INVALID_IMAGE_FORMAT_DESCRIPTOR"
 		};
 		for (int i = 0; i < sizeof(errCodes) / sizeof(errCodes[0]); ++i) {
 			if (errCodes[i] == errorCode) return errStrings[i];
