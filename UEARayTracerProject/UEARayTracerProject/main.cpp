@@ -26,6 +26,9 @@ TracerKernel kernel;
 GLuint outputTexture;
 GLuint shaderProgram;
 
+GLuint vao;
+GLuint quadVBO;
+
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
 }
@@ -191,6 +194,34 @@ GLuint createShaderProgram() {
 	return program;
 }
 
+void createRenderQuad() {
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(1, &quadVBO);
+
+	const float vertices[] = {
+		-1.0f, -1.0f, 0.0f, 1.0f, // BOTTOM LEFT
+		1.0f, -1.0f, 1.0f, 1.0f, // BOTTOM RIGHT
+		1.0f, 1.0f, 1.0f, 0.0f, // TOP RIGHT
+		-1.0f, -1.0f, 0.0f, 1.0f, // BOTTOM LEFT
+		1.0f, 1.0f, 1.0f, 0.0f, // TOP RIGHT
+		-1.0f, 1.0f, 0.0f, 0.0f, // TOP LEFT
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(GLfloat) * 4, 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(GLfloat) * 4, (void*)(sizeof(GLfloat) * 2));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+}
+
 int main(void) {
 	
 	if (!initGL()) {
@@ -232,10 +263,16 @@ int main(void) {
 	// Get uniforms
 	GLint samplerUniformLoc = glGetUniformLocation(shaderProgram, SAMPLER_UNIFORM);
 
+	// Setup render quad
+	createRenderQuad();
+
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 
 		glUseProgram(shaderProgram);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
