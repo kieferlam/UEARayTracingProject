@@ -164,7 +164,7 @@ GLuint createShaderProgram() {
 		glDeleteShader(vshader);
 		glDeleteShader(fshader);
 		glDeleteProgram(program);
-		return -1;
+		return 0;
 	}
 
 	// Attach shaders to program and link
@@ -185,7 +185,7 @@ GLuint createShaderProgram() {
 	if (linkStatus == GL_FALSE) {
 		glPrintProgramLog(program);
 		glDeleteProgram(program);
-		return -1;
+		return 0;
 	}
 
 	return program;
@@ -224,7 +224,7 @@ int main(void) {
 	// Setup OpenGL for rendering
 	// Create shader program
 	shaderProgram = createShaderProgram();
-	if (shaderProgram < 0) {
+	if (shaderProgram == 0) {
 		std::cout << "Couldn't create shader program." << std::endl;
 		return -1;
 	}
