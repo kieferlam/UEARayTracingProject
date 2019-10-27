@@ -1,6 +1,6 @@
 #include "TracerKernel.h"
 
-bool TracerKernel::create(GLuint texture) {
+bool TracerKernel::create(GLuint texture, int width, int height) {
 	// Create the kernel
 	kernel = cl::createKernel(kernelName.c_str());
 	if (kernel == nullptr) {
@@ -24,8 +24,29 @@ bool TracerKernel::create(GLuint texture) {
 	}
 
 	// Set kernel parameters
-	clSetKernelArg(kernel, 0, sizeof(outputImageBuffer), outputImageBuffer);
-	clSetKernelArg(kernel, 1, sizeof(paramInput), paramInput);
+	clSetKernelArg(kernel, 0, sizeof(outputImageBuffer), &outputImageBuffer);
+	clSetKernelArg(kernel, 1, sizeof(paramInput), &paramInput);
+
+	worksize[0] = width;
+	worksize[1] = height;
 
 	return true;
+}
+
+void TracerKernel::trace(bool block) {
+	cl_int error;
+
+	// Acquire OpenGL texture
+	error = clEnqueueAcquireGLObjects(cl::queue, 1, &outputImageBuffer, 0, NULL, NULL);
+	if (error != CL_SUCCESS) std::cout << "Error acquiring GL objects: " << cl::getErrorString(error) << std::endl;
+
+	// Queue tracer
+	error = clEnqueueNDRangeKernel(cl::queue, kernel, 2, 0, worksize, NULL, NULL, NULL, NULL);
+	if (error != CL_SUCCESS) std::cout << "Error queueing kernel: " << cl::getErrorString(error) << std::endl;
+
+	// Release OpenGL texture
+	error = clEnqueueReleaseGLObjects(cl::queue, 1, &outputImageBuffer, 0, NULL, NULL);
+	if (error != CL_SUCCESS) std::cout << "Error release GL objects: " << cl::getErrorString(error) << std::endl;
+
+	if(block) clFinish(cl::queue);
 }

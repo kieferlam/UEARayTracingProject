@@ -246,7 +246,7 @@ int main(void) {
 	outputTexture = createEmptyTexture(IMAGE_WIDTH, IMAGE_HEIGHT);
 
 	// Create the kernel
-	if (!kernel.create(outputTexture)) {
+	if (!kernel.create(outputTexture, IMAGE_WIDTH, IMAGE_HEIGHT)) {
 		std::cout << "Failed to create kernel." << std::endl;
 		glfwTerminate();
 		return -1;
@@ -269,7 +269,15 @@ int main(void) {
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 
+		// Trace
+		kernel.trace(false);
+
+		// Render
 		glUseProgram(shaderProgram);
+
+		glUniform1i(samplerUniformLoc, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, outputTexture);
 
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
