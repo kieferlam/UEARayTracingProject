@@ -1,5 +1,5 @@
 #version 430
-precision float mediump;
+precision mediump float;
 
 in vec2 texcoord;
 
