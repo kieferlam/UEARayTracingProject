@@ -17,6 +17,7 @@
 
 #define VERTEX_SHADER_PATH ("shader/vertexshader.vert")
 #define FRAGMENT_SHADER_PATH ("shader/fragmentshader.frag")
+#define SAMPLER_UNIFORM ("textureSampler")
 
 GLFWwindow* window;
 
@@ -228,11 +229,13 @@ int main(void) {
 		return -1;
 	}
 
+	// Get uniforms
+	GLint samplerUniformLoc = glGetUniformLocation(shaderProgram, SAMPLER_UNIFORM);
 
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 
-
+		glUseProgram(shaderProgram);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
