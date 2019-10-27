@@ -15,11 +15,15 @@
 #define IMAGE_WIDTH (1280)
 #define IMAGE_HEIGHT (720)
 
+#define VERTEX_SHADER_PATH ("shader/vertexshader.vert")
+#define FRAGMENT_SHADER_PATH ("shader/fragmentshader.frag")
+
 GLFWwindow* window;
 
 TracerKernel kernel;
 
 GLuint outputTexture;
+GLuint shaderProgram;
 
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
@@ -92,6 +96,100 @@ GLuint createEmptyTexture(int width, int height) {
 	return handle;
 }
 
+void glPrintShaderLog(GLuint shader) {
+	GLint logLength;
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+
+	char* log = new char[logLength];
+	glGetShaderInfoLog(shader, logLength, NULL, log);
+
+	std::cout << "Shader compile error:" << std::endl;
+	std::cout << log << std::endl;
+
+	delete[] log;
+}
+
+void glPrintProgramLog(GLuint program) {
+	GLint logLength;
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+
+	char* log = new char[logLength];
+	glGetProgramInfoLog(program, logLength, NULL, log);
+
+	std::cout << "Program compile error:" << std::endl;
+	std::cout << log << std::endl;
+
+	delete[] log;
+}
+
+GLuint createShaderProgram() {
+	GLuint program = glCreateProgram();
+	GLuint vshader, fshader;
+	vshader = glCreateShader(GL_VERTEX_SHADER);
+	fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	// Load shader sources
+	std::string vshaderStr = readFile(VERTEX_SHADER_PATH);
+	const char* vshaderCstr = vshaderStr.c_str();
+	const GLint vshaderLen = vshaderStr.length();
+	glShaderSource(vshader, 1, &vshaderCstr, &vshaderLen);
+
+	std::string fshaderStr = readFile(FRAGMENT_SHADER_PATH);
+	const char* fshaderCstr = fshaderStr.c_str();
+	const GLint fshaderLen = fshaderStr.length();
+	glShaderSource(fshader, 1, &fshaderCstr, &fshaderLen);
+
+	bool hasError = false;
+	GLint compileStatus;
+
+	// Compile shaders
+	glCompileShader(vshader);
+	glGetShaderiv(vshader, GL_COMPILE_STATUS, &compileStatus);
+	hasError |= compileStatus == GL_FALSE;
+	if (compileStatus == GL_FALSE) {
+		glPrintShaderLog(vshader);
+	}
+
+	glCompileShader(fshader);
+	glGetShaderiv(fshader, GL_COMPILE_STATUS, &compileStatus);
+	hasError |= compileStatus == GL_FALSE;
+	if (compileStatus == GL_FALSE) {
+		glPrintShaderLog(fshader);
+	}
+
+	// Error reporting
+	if (hasError) {
+		std::cout << "Error creating shaders." << std::endl;
+		glDeleteShader(vshader);
+		glDeleteShader(fshader);
+		glDeleteProgram(program);
+		return -1;
+	}
+
+	// Attach shaders to program and link
+	glAttachShader(program, vshader);
+	glAttachShader(program, fshader);
+
+	glLinkProgram(program);
+
+	// Detach and delete as it is no longer needed with the program already linked
+	glDetachShader(program, vshader);
+	glDetachShader(program, fshader);
+	glDeleteShader(vshader);
+	glDeleteShader(fshader);
+
+	// Error checking for shader program
+	GLint linkStatus;
+	glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+	if (linkStatus == GL_FALSE) {
+		glPrintProgramLog(program);
+		glDeleteProgram(program);
+		return -1;
+	}
+
+	return program;
+}
+
 int main(void) {
 	
 	if (!initGL()) {
@@ -120,6 +218,24 @@ int main(void) {
 		std::cout << "Failed to create kernel." << std::endl;
 		glfwTerminate();
 		return -1;
+	}
+
+	// Setup OpenGL for rendering
+	// Create shader program
+	shaderProgram = createShaderProgram();
+	if (shaderProgram < 0) {
+		std::cout << "Couldn't create shader program." << std::endl;
+		return -1;
+	}
+
+
+	// Main loop
+	while (!glfwWindowShouldClose(window)) {
+
+
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 	return 0;
