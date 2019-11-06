@@ -266,11 +266,14 @@ int main(void) {
 	// Setup render quad
 	createRenderQuad();
 
+	// Send data
+	kernel.writeKernelInput(CL_TRUE);
+
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 
 		// Trace
-		kernel.trace(false);
+		kernel.trace(CL_TRUE);
 
 		// Render
 		glUseProgram(shaderProgram);
