@@ -130,8 +130,8 @@ __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* i
     int idx = get_global_id(0);
     int idy = get_global_id(1);
 
-    float nx = (2.0f * ((float)(idx) / input->width) - 0.5f) * input->aspect;
-    float ny = 2.0f * ((float)(idy) / input->height) - 0.5f;
+    float nx = 2.0f * (((float)(idx) / input->width) - 0.5f) * input->aspect;
+    float ny = 2.0f * (((float)(idy) / input->height) - 0.5f);
 
     // Generate primary ray
     Ray primaryRay;
