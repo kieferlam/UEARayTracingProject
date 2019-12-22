@@ -1,4 +1,6 @@
 #include "cl_helper.h"
+#include <fstream>
+#include <sstream>
 
 cl_platform_id retrievePlatform() {
 	cl_platform_id platforms[MAX_PLATFORMS];
@@ -21,7 +23,15 @@ cl_platform_id retrievePlatform() {
 		}
 	}
 
-	return platforms[numPlatforms - 1];
+	int platform = -1;
+	if (numPlatforms == 1) platform = 0; // If only one platform, just select that one
+	// Ask the user to select a platform.
+	while (platform < 0 || platform >= numPlatforms) {
+		std::cout << "Select platform by index: ";
+		std::cin >> platform;
+	}
+
+	return platforms[platform];
 }
 
 cl_device_id retrieveDevice(cl_platform_id platform) {
@@ -45,7 +55,30 @@ cl_device_id retrieveDevice(cl_platform_id platform) {
 		}
 	}
 
-	return devices[numDevices - 1];
+	int device = -1;
+	if (numDevices == 1) device = 0; // If only one device, just select that one
+	// Ask user to select device
+	while (device < 0 || device >= numDevices) {
+		std::cout << "Select device by index: ";
+		std::cin >> device;
+	}
+
+	return devices[device];
+}
+
+void loadConfigFromFile(std::string file, std::unordered_map<std::string, std::string>& config) {
+	std::ifstream in(file);
+	std::string line;
+	while (std::getline(in, line)) {
+		std::istringstream is_line(line);
+		std::string key;
+		if (std::getline(is_line, key, '=')) {
+			std::string value;
+			if (std::getline(is_line, value)) {
+				config[key] = value;
+			}
+		}
+	}
 }
 
 namespace cl {
@@ -57,6 +90,8 @@ namespace cl {
 
 	cl_program program;
 	cl_command_queue queue;
+
+	std::unordered_map<std::string, std::string> config;
 
 	// Local
 	std::vector<const char*> sources;
@@ -139,7 +174,11 @@ namespace cl {
 		}
 	}
 
-	bool init(bool interop) {
+	bool init() {
+		// Load config
+		loadConfigFromFile(CONFIG_FILE, config);
+
+		// CL stuff
 		platform = retrievePlatform();
 		if (platform == nullptr) {
 			std::cout << "Could not retrieve platform." << std::endl;
@@ -166,7 +205,7 @@ namespace cl {
 		};
 
 		cl_int err;
-		if (interop) {
+		if (getConfigBool("useInterop")) {
 			context = clCreateContext(props, 1, &device, NULL, NULL, &err);
 		} else {
 			context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
@@ -224,5 +263,20 @@ namespace cl {
 		if (err == NULL) return kernel;
 		std::cout << "Kernel creation error on '" << kernelName << "': " << getErrorString(err) << std::endl;
 		return nullptr;
+	}
+
+	bool getConfigBool(std::string key) {
+		if (config.find(key) == config.end()) return false;
+		return config[key] == "true";
+	}
+
+	int getConfigInt(std::string key) {
+		if (config.find(key) == config.end()) return -1;
+		return std::stoi(config[key]);
+	}
+	
+	float getConfigFloat(std::string key) {
+		if (config.find(key) == config.end()) return -1;
+		return std::stof(config[key]);
 	}
 }

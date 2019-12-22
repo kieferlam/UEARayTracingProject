@@ -6,18 +6,15 @@
 #include <stdio.h>
 #include "cl_helper.h"
 
-#define MAX_SPHERES (64)
+#define MAX_SPHERES (8)
 
-struct SphereStruct {
+__declspec (align(16)) struct SphereStruct{
 	cl_float3 position;
 	cl_float3 colour;
 	cl_float radius;
-	cl_float padding1;
-	cl_float padding2;
-	cl_float padding3;
 };
 
-struct KernelInputStruct {
+__declspec (align(16)) struct KernelInputStruct {
 	cl_float aspect;
 	cl_float width;
 	cl_float height;

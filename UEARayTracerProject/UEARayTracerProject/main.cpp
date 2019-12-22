@@ -7,6 +7,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <stddef.h>
 #include "cl_helper.h"
 #include "TracerKernel.h"
 
@@ -229,7 +230,7 @@ int main(void) {
 		return -1;
 	}
 
-	if (!cl::init(true)) {
+	if (!cl::init()) {
 		std::cout << "Failed to initialise OpenCL." << std::endl;
 		glfwTerminate();
 		return -1;

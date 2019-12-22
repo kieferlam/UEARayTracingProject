@@ -1,7 +1,7 @@
 #define PI (3.14159265359f)
 #define SQ(x) ((x)*(x))
 
-#define MAX_SPHERES (64)
+#define MAX_SPHERES (8)
 #define MAX_VALUE (0xFFFFFFFF)
 
 __constant float3 FORWARD = (float3)(0.0f, 0.0f, 1.0f);
@@ -11,13 +11,13 @@ typedef struct{
     float3 direction;
 } Ray;
 
-typedef struct __attribute__ ((aligned (16))) {
+typedef struct __attribute__ ((aligned(16))){
     float3 position;
     float3 colour;
     float radius;
 } SphereStruct;
 
-typedef struct {
+typedef struct __attribute__ ((aligned(16))){
     float aspect;
     float width;
     float height;
@@ -39,10 +39,6 @@ typedef struct {
     float minT;
     float maxT;
 } SphereIntersect;
-
-typedef struct{
-    float3 test;
-} TestStruct;
 
 float3 sphere_normal(__constant SphereStruct* sphere, float3 surface){
     return normalize(surface - sphere->position);
@@ -137,10 +133,6 @@ __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* i
     Ray primaryRay;
     primaryRay.origin = (float3)(nx, ny, input->screenDistance);
     primaryRay.direction = normalize(primaryRay.origin - input->camera);
-
-    // int2 coord = {idx, idy};
-    // write_imagef(image, coord, (float4)((float)(idx) / 1280.0f, ((float)idy) / 720.0f, 1.0f, 1.0f));
-    // return;
 
     float4 final = (float4)(1.0f, 1.0f, 1.0f, 1.0f);
     float exposure = 1.0f;
