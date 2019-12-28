@@ -1,6 +1,7 @@
 #include "cl_helper.h"
 #include <fstream>
 #include <sstream>
+#include "TracerKernel.h"
 
 cl_platform_id retrievePlatform() {
 	cl_platform_id platforms[MAX_PLATFORMS];
@@ -232,6 +233,25 @@ namespace cl {
 		sourceLengths.push_back(source.length());
 	}
 
+	std::string getBuildOptions() {
+		std::ostringstream stream;
+		stream << BUILD_OPTIONS
+			<< " -D MAX_SPHERES=" << MAX_SPHERES
+			<< " ";
+		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
+		if (getConfigBool("disableOptimisations")) stream << "-cl-opt-disable ";
+		if (getConfigBool("enableMad")) stream << "-cl-mad-enable ";
+		if (getConfigBool("enableUnsafeMaths")) stream << "-cl-unsafe-math-optimizations ";
+		if (getConfigBool("finiteMathsOnly")) stream << "-cl-finite-math-only ";
+		if (getConfigBool("fastRelaxedMaths")) stream << "-cl-fast-relaxed-math ";
+
+		if (config.find("buildOptions") != config.end()) {
+			stream << config["buildOptions"] << " ";
+		}
+
+		return stream.str();
+	}
+
 	bool build() {
 		cl_int err;
 		program = clCreateProgramWithSource(context, sources.size(), &sources[0], &sourceLengths[0], &err);
@@ -239,7 +259,9 @@ namespace cl {
 			std::cout << "Program creation error: " << getErrorString(err) << std::endl;
 		}
 
-		err = clBuildProgram(program, 1, &device, BUILD_OPTIONS, NULL, NULL);
+		std::string buildOptions = getBuildOptions();
+		std::cout << "BuildOptions: " << buildOptions << std::endl;
+		err = clBuildProgram(program, 1, &device, buildOptions.c_str(), NULL, NULL);
 		if (err == CL_SUCCESS) {
 			queue = clCreateCommandQueueWithProperties(context, device, NULL, &err);
 			if (err == NULL) return true;
@@ -250,9 +272,16 @@ namespace cl {
 		// IF BUILD FAILS
 		std::cout << "Build error: " << getErrorString(err) << std::endl;
 
-		char buildLog[2048];
-		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 2048, buildLog, NULL);
-		std::cout << buildLog << std::endl;
+		size_t buildLogLength;
+		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, NULL, NULL, &buildLogLength);
+		char* buildLog = new char[buildLogLength];
+		err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, buildLogLength, buildLog, NULL);
+		if (err != CL_SUCCESS) {
+			std::cout << "Failed to get program build log: " << getErrorString(err) << std::endl;
+		} else {
+			std::cout << buildLog << std::endl;
+		}
+		delete[] buildLog;
 
 		return false;
 	}

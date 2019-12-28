@@ -1,7 +1,6 @@
 #define PI (3.14159265359f)
 #define SQ(x) ((x)*(x))
 
-#define MAX_SPHERES (8)
 #define MAX_VALUE (0xFFFFFFFF)
 
 __constant float3 FORWARD = (float3)(0.0f, 0.0f, 1.0f);
@@ -27,6 +26,13 @@ typedef struct __attribute__ ((aligned(16))){
     int numSpheres;
 } KernelInput;
 
+typedef struct __attribute__ ((aligned(16))){
+    int2 skyboxSize;
+    bool shadows;
+    bool reflection;
+    bool refraction;
+} RTConfig;
+
 typedef struct {
     bool hasIntersect;
     float T;
@@ -39,6 +45,10 @@ typedef struct {
     float minT;
     float maxT;
 } SphereIntersect;
+
+/**
+    INTERSECT FUNCTIONS
+ */
 
 float3 sphere_normal(__constant SphereStruct* sphere, float3 surface){
     return normalize(surface - sphere->position);
@@ -69,6 +79,103 @@ bool sphere_intersect(Ray* ray, __constant SphereStruct* sphere, SphereIntersect
 
     return true;
 }
+
+/**
+    SKYBOX
+ */
+
+float3 skybox_cubemap(__constant RTConfig* config, __constant unsigned char* skybox_data, float3 dir){
+    const int skybox_img_size = config->skyboxSize.x * config->skyboxSize.y * 3;
+    int face = 0;
+    const int2 coord_indices[6] = {{2, 1}, {2, 1}, {0, 2}, {0, 2}, {0, 1}, {0, 1}};
+
+    float3 absDir = (float3)(fabs(dir.x), fabs(dir.y), fabs(dir.z));
+    bool polarity[3] = {dir.x > 0 ? true : false, dir.y > 0 ? true : false, dir.z > 0 ? true : false};
+
+    float maxAxis, uc, vc;
+    float2 uv;
+
+    // POSITIVE X
+    if(polarity[0] && absDir.x >= absDir.y && absDir.x >= absDir.z){
+        // uv.u goes from +z to -z
+        // uv.v goes from -y to +y
+        maxAxis = absDir.x;
+        uc = -dir.z;
+        vc = dir.y;
+        face = 0;
+    }
+    
+    // NEGATIVE X
+    if(!polarity[0] && absDir.x >= absDir.y && absDir.x >= absDir.z){
+        // uv.u goes from +z to -z
+        // uv.v goes from -y to +y
+        maxAxis = absDir.x;
+        uc = dir.z;
+        vc = dir.y;
+        face = 1;
+    }
+    
+    // POSITIVE Y
+    if(polarity[1] && absDir.y >= absDir.x && absDir.y >= absDir.z){
+        // uv.u goes from -x to +x
+        // uv.v goes from +z to -z
+        maxAxis = absDir.y;
+        uc = dir.x;
+        vc = -dir.z;
+        face = 2;
+    }
+    
+    // NEGATIVE Y
+    if(!polarity[1] && absDir.y >= absDir.x && absDir.y >= absDir.z){
+        // uv.u goes from -x to +x
+        // uv.v goes from -z to +z
+        maxAxis = absDir.y;
+        uc = dir.x;
+        vc = dir.z;
+        face = 3;
+    }
+    
+    // POSITIVE Z
+    if(polarity[2] && absDir.z >= absDir.x && absDir.z >= absDir.y){
+        // uv.u goes from -x to +x
+        // uv.v goes from -y to +y
+        maxAxis = absDir.z;
+        uc = dir.x;
+        vc = dir.y;
+        face = 4;
+    }
+    
+    // NEGATIVE Z
+    if(polarity[2] && absDir.z >= absDir.x && absDir.z >= absDir.y){
+        // uv.u goes from +x to -x
+        // uv.v goes from -y to +y
+        maxAxis = absDir.z;
+        uc = -dir.x;
+        vc = dir.y;
+        face = 5;
+    }
+    
+    uv = (float2)(0.5f * (uc / maxAxis + 1.0f), 0.5f * (vc / maxAxis + 1.0f));
+
+    // Get offset in array corresponding to face
+    int data_offset = skybox_img_size * face;
+
+    // Get data offsets
+    int x = (int)(uv.x * config->skyboxSize.x);
+    int y = (int)(uv.y * config->skyboxSize.y);
+
+    int pixelOffset = (y * config->skyboxSize.x + x) * 3;
+
+    float r = skybox_data[data_offset + pixelOffset + 0] / 255.0f;
+    float g = skybox_data[data_offset + pixelOffset + 1] / 255.0f;
+    float b = skybox_data[data_offset + pixelOffset + 2] / 255.0f;
+    
+    return (float3)(r, g, b);
+}
+
+/**
+    RAY TRACE
+ */
 
 void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
     SphereIntersect closest_intersect = {MAX_VALUE, MAX_VALUE};
@@ -122,10 +229,12 @@ float3 trace_raw(__constant KernelInput* input, Ray* primaryRay){
     return values;
 }
 
-__kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input){
+__kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox){
+    // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
 
+    // Normalised coordinates
     float nx = 2.0f * (((float)(idx) / input->width) - 0.5f) * input->aspect;
     float ny = 2.0f * (((float)(idy) / input->height) - 0.5f);
 
@@ -138,6 +247,8 @@ __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* i
     float exposure = 1.0f;
 
     float3 raw = trace_raw(input, &primaryRay);
+    
+    raw = skybox_cubemap(config, skybox, primaryRay.direction);
 
     final = (float4)(raw, 0.0f) * exposure;
     

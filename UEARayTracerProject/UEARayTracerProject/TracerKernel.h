@@ -14,6 +14,13 @@ __declspec (align(16)) struct SphereStruct{
 	cl_float radius;
 };
 
+__declspec (align(16)) struct RTConfig {
+	cl_int2 skyboxSize;
+	cl_bool shadows = false;
+	cl_bool reflection = false;
+	cl_bool refraction = false;
+};
+
 __declspec (align(16)) struct KernelInputStruct {
 	cl_float aspect;
 	cl_float width;
@@ -34,9 +41,16 @@ class TracerKernel {
 
 	cl_mem outputImageBuffer;
 
+	cl_mem configBuffer;
+
+	unsigned char* skyboxImages[6] = { nullptr ,nullptr ,nullptr ,nullptr ,nullptr ,nullptr };
+	cl_mem skyboxBuffer;
+
 	size_t worksize[2];
 
 	KernelInputStruct kernelInputStruct;
+
+	RTConfig config;
 
 public:
 

@@ -34,6 +34,10 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
 }
 
+void error_callback(int code, const char* description) {
+	std::cout << "GLFW CALLBACK: " << code << " " << description << std::endl;
+}
+
 std::string readFile(const std::string& path) {
 	std::ifstream file(path);
 	return std::string(std::istreambuf_iterator<char>(file), (std::istreambuf_iterator<char>()));
@@ -47,10 +51,6 @@ bool initGL() {
 	}
 
 	// Create window for OpenGL version 4.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "UEA 3rd Year Project: Real-time Raytracing", NULL, NULL);
 
 	// If window fails to load, terminate.
@@ -72,7 +72,10 @@ bool initGL() {
 	// Setup OpenGL error callback
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(MessageCallback, 0);
+
+	glfwSetErrorCallback(error_callback);
 #endif
+
 
 	return true;
 }
