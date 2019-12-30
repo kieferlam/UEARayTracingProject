@@ -23,7 +23,7 @@ __declspec (align(16)) struct SphereStruct {
 
 __declspec (align(16)) struct RTConfig {
 	cl_int2 skyboxSize;
-	cl_int bounceLimit = 1;
+	cl_int bounceLimit = 3;
 	cl_bool skybox = true;
 	cl_bool shadows = true;
 	cl_bool reflection = true;
