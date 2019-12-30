@@ -8,17 +8,24 @@
 
 #define MAX_SPHERES (8)
 
-__declspec (align(16)) struct SphereStruct{
+__declspec (align(16)) struct Material {
+	cl_float3 diffuse;
+	cl_float reflectivity;
+};
+
+__declspec (align(16)) struct SphereStruct {
+	Material material;
 	cl_float3 position;
-	cl_float3 colour;
 	cl_float radius;
 };
 
 __declspec (align(16)) struct RTConfig {
 	cl_int2 skyboxSize;
-	cl_bool shadows = false;
-	cl_bool reflection = false;
-	cl_bool refraction = false;
+	cl_int bounceLimit = 1;
+	cl_bool skybox = true;
+	cl_bool shadows = true;
+	cl_bool reflection = true;
+	cl_bool refraction = true;
 };
 
 __declspec (align(16)) struct KernelInputStruct {

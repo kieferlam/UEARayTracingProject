@@ -1,6 +1,6 @@
 #pragma once
 
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 210
 
 #include <CL/opencl.h>
 #include <vector>
@@ -14,7 +14,7 @@
 #define MAX_PLATFORMS (4)
 #define PLATFORM_INFO_CHAR_LENGTH (256)
 
-#define BUILD_OPTIONS ("-cl-std=CL2.0")
+#define BUILD_OPTIONS ("-cl-std=CL2.1")
 
 namespace cl {
 

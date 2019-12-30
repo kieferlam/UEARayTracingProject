@@ -1,6 +1,8 @@
 #define PI (3.14159265359f)
 #define SQ(x) ((x)*(x))
 
+#define EPSILON (0.001f)
+
 #define MAX_VALUE (0xFFFFFFFF)
 
 __constant float3 FORWARD = (float3)(0.0f, 0.0f, 1.0f);
@@ -11,8 +13,13 @@ typedef struct{
 } Ray;
 
 typedef struct __attribute__ ((aligned(16))){
+    float3 diffuse;
+    float reflectivity;
+} Material;
+
+typedef struct __attribute__ ((aligned(16))){
+    Material material;
     float3 position;
-    float3 colour;
     float radius;
 } SphereStruct;
 
@@ -28,6 +35,8 @@ typedef struct __attribute__ ((aligned(16))){
 
 typedef struct __attribute__ ((aligned(16))){
     int2 skyboxSize;
+    int bounceLimit;
+    bool skybox;
     bool shadows;
     bool reflection;
     bool refraction;
@@ -37,8 +46,10 @@ typedef struct {
     bool hasIntersect;
     float T;
     float T2;
+    float3 intersect;
     float3 normal;
     int sphereIndex;
+    Material material;
 } TraceResult;
 
 typedef struct {
@@ -74,8 +85,13 @@ bool sphere_intersect(Ray* ray, __constant SphereStruct* sphere, SphereIntersect
         result->maxT = temp;
     }
 
+    // Epsilon (Make sure ray from a sphere doesn't intersect itself)
+    if(result->minT < EPSILON){
+        result->minT = result->maxT;
+    }
+
     // If intersect is behind origin, it doesn't intersect;
-    if(result->maxT < 0) return false;
+    if(result->maxT < EPSILON) return false;
 
     return true;
 }
@@ -85,6 +101,10 @@ bool sphere_intersect(Ray* ray, __constant SphereStruct* sphere, SphereIntersect
  */
 
 float3 skybox_cubemap(__constant RTConfig* config, __constant unsigned char* skybox_data, float3 dir){
+
+    // If skybox disabled, return black
+    if(!config->skybox) return (float3)(0.0f, 0.0f, 0.0f);
+
     const int skybox_img_size = config->skyboxSize.x * config->skyboxSize.y * 3;
     int face = 0;
     const int2 coord_indices[6] = {{2, 1}, {2, 1}, {0, 2}, {0, 2}, {0, 1}, {0, 1}};
@@ -137,22 +157,22 @@ float3 skybox_cubemap(__constant RTConfig* config, __constant unsigned char* sky
     
     // POSITIVE Z
     if(polarity[2] && absDir.z >= absDir.x && absDir.z >= absDir.y){
-        // uv.u goes from -x to +x
-        // uv.v goes from -y to +y
-        maxAxis = absDir.z;
-        uc = dir.x;
-        vc = dir.y;
-        face = 4;
-    }
-    
-    // NEGATIVE Z
-    if(polarity[2] && absDir.z >= absDir.x && absDir.z >= absDir.y){
         // uv.u goes from +x to -x
         // uv.v goes from -y to +y
         maxAxis = absDir.z;
         uc = -dir.x;
         vc = dir.y;
         face = 5;
+    }
+    
+    // NEGATIVE Z
+    if(!polarity[2] && absDir.z >= absDir.x && absDir.z >= absDir.y){
+        // uv.u goes from -x to +x
+        // uv.v goes from -y to +y
+        maxAxis = absDir.z;
+        uc = dir.x;
+        vc = dir.y;
+        face = 4;
     }
     
     uv = (float2)(0.5f * (uc / maxAxis + 1.0f), 0.5f * (vc / maxAxis + 1.0f));
@@ -177,7 +197,12 @@ float3 skybox_cubemap(__constant RTConfig* config, __constant unsigned char* sky
     RAY TRACE
  */
 
+float3 reflect(float3 in, float3 normal){
+    return in - 2.0f * dot(in, normal) * normal;
+}
+
 void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
+    // Sphere intersection
     SphereIntersect closest_intersect = {MAX_VALUE, MAX_VALUE};
     int closest_i = -1;
     for(int i = 0; i < input->numSpheres; ++i){
@@ -209,24 +234,54 @@ void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
     result->hasIntersect = true;
     result->T = closest_intersect.minT;
     result->T2 = closest_intersect.maxT;
+    result->intersect = ray->origin + ray->direction * result->T;
+    result->sphereIndex = closest_i;
 
     // Find the normal of the sphere
-    result->normal = sphere_normal(&input->spheres[result->sphereIndex], ray->origin + ray->direction * result->T);
+    result->normal = sphere_normal(&input->spheres[result->sphereIndex], result->intersect);
 
-    result->sphereIndex = closest_i;
+    // Get material
+    result->material = input->spheres[result->sphereIndex].material;
+
 }
 
-float3 trace_raw(__constant KernelInput* input, Ray* primaryRay){
-    float3 values = (float3)(0.0f, 0.0f, 0.1f);
+void combine_ray(float3* value, TraceResult* result){
+    *value *= result->material.diffuse;
+}
 
-    TraceResult result;
-    trace_ray(input, primaryRay, &result);
+float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox, Ray* primaryRay){
+    // Set to background value
+    float3 value = (float3)(1.0f, 1.0f, 1.0f);
 
-    if(result.hasIntersect){
-        values += input->spheres[result.sphereIndex].colour;
+    Ray ray = *primaryRay;
+    float prevReflectivity = 1.0f;
+    bool hasIntersect = false;
+    int bounces = 0;
+    for(int i = 0; i < config->bounceLimit + 1; ++i){
+        TraceResult result;
+        trace_ray(input, &ray, &result);
+
+        if(!result.hasIntersect){
+            // If no intersect, add skybox value
+            value *= skybox_cubemap(config, skybox, ray.direction);
+            break;
+        }else{
+            hasIntersect = true;
+            bounces++;
+            combine_ray(&value, &result);
+
+            ray.origin = result.intersect;
+            ray.direction = reflect(ray.direction, result.normal);
+
+            prevReflectivity = result.material.reflectivity;
+        }
     }
 
-    return values;
+    if(!hasIntersect){
+        return skybox_cubemap(config, skybox, primaryRay->direction);
+    }
+
+    return value;
 }
 
 __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox){
@@ -246,9 +301,7 @@ __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* i
     float4 final = (float4)(1.0f, 1.0f, 1.0f, 1.0f);
     float exposure = 1.0f;
 
-    float3 raw = trace_raw(input, &primaryRay);
-    
-    raw = skybox_cubemap(config, skybox, primaryRay.direction);
+    float3 raw = trace_raw(input, config, skybox, &primaryRay);
 
     final = (float4)(raw, 0.0f) * exposure;
     
