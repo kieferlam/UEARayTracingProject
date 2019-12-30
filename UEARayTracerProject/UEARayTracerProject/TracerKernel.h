@@ -21,13 +21,13 @@ __declspec (align(16)) struct SphereStruct {
 	cl_float radius;
 };
 
-__declspec (align(16)) struct RTConfig {
+__declspec (align(32)) struct RTConfig {
 	cl_int2 skyboxSize;
 	cl_int bounceLimit = 3;
-	cl_bool skybox = true;
-	cl_bool shadows = true;
-	cl_bool reflection = true;
-	cl_bool refraction = true;
+	cl_int skybox = true;
+	cl_int shadows = true;
+	cl_int reflection = true;
+	cl_int refraction = true;
 };
 
 __declspec (align(16)) struct KernelInputStruct {

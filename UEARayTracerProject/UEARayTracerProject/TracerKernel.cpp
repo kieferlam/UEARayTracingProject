@@ -35,7 +35,7 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 	kernelInputStruct.aspect = (float)width / (float)height;
 	kernelInputStruct.width = width;
 	kernelInputStruct.height = height;
-	kernelInputStruct.screenDistance = 1.0f;
+	kernelInputStruct.screenDistance = 2.0f;
 	kernelInputStruct.camera = { 0.0f, 0.0f, 0.0f };
 	inputKernelBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(KernelInputStruct), &kernelInputStruct, &err);
 	if (err != CL_SUCCESS) {
@@ -50,10 +50,9 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 
 	// Config buffer
 	config.skyboxSize = { skyboxWidth, skyboxHeight };
-	config.shadows = true;
 	configBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(RTConfig), &config, &err);
 	if (err != CL_SUCCESS) {
-		std::cout << "Error creating rt features buffer: " << cl::getErrorString(err) << std::endl;
+		std::cout << "Error creating rt config buffer: " << cl::getErrorString(err) << std::endl;
 	}
 
 	// Skybox buffers
@@ -86,15 +85,17 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 	// Meta
 
 	// Spheres
-	for (int i = 0; i < 1; ++i) {
+	kernelInputStruct.numSpheres = 0;
+	for (int i = 0; i < 2; ++i) {
 		kernelInputStruct.spheres[i].material.diffuse = { 0.4f, 0.3f, 0.5f };
-		kernelInputStruct.spheres[i].material.reflectivity = 0.0f;
-		kernelInputStruct.spheres[i].material.opacity = 0.1f;
-		kernelInputStruct.spheres[i].material.refractiveIndex = 1.3f;
-		kernelInputStruct.spheres[i].position = { 0.0f, 0.0f, 20.0f};
+		kernelInputStruct.spheres[i].material.reflectivity = i % 2 == 0 ? 1.0f : 0.0f;
+		kernelInputStruct.spheres[i].material.opacity = i % 2 == 0 ? 1.0f : 0.0f;
+		kernelInputStruct.spheres[i].material.refractiveIndex = 1.8f;
+		kernelInputStruct.spheres[i].position = { -20.0f + i * 40.0f, 0.0f, 50.0f};
 		kernelInputStruct.spheres[i].radius = 10.0f;
+
+		kernelInputStruct.numSpheres++;
 	}
-	kernelInputStruct.numSpheres = 1;
 
 	return true;
 }

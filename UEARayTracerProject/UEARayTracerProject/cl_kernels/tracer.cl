@@ -37,13 +37,13 @@ typedef struct __attribute__ ((aligned(16))){
     int numSpheres;
 } KernelInput;
 
-typedef struct __attribute__ ((aligned(16))){
+typedef struct __attribute__ ((aligned(32))){
     int2 skyboxSize;
     int bounceLimit;
-    bool skybox;
-    bool shadows;
-    bool reflection;
-    bool refraction;
+    int skybox;
+    int shadows;
+    int reflection;
+    int refraction;
 } RTConfig;
 
 typedef struct {
@@ -258,10 +258,6 @@ void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
 
 }
 
-float3 combine_reflect_ray(float3 diffuse, float reflectivity){
-    return diffuse * reflectivity;
-}
-
 float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox, Ray* primaryRay){
     float3 accum = (float3)(0.0f, 0.0f, 0.0f);
 
@@ -279,9 +275,9 @@ float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __c
     accum += primaryResult.material.diffuse;
 
     // Trace secondary rays
-    
+
     // Reflection
-    if(config->reflection && primaryResult.material.reflectivity > EPSILON){ // Only do reflection ray if it's reflective
+    if(config->reflection && primaryResult.material.reflectivity > EPSILON){ // Only do reflection ray if it's reflective enough to matter
         ray.origin = primaryResult.intersect;
         ray.direction = reflect(ray.direction, primaryResult.normal);
         Material parentMaterial = primaryResult.material;
@@ -306,25 +302,27 @@ float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __c
     }
 
     // Refraction / Transparency
-    if(primaryResult.material.opacity < 1.0f - EPSILON){
+    if(config->refraction && primaryResult.material.opacity < 1.0f - EPSILON){
         ray.origin = primaryResult.intersect;
         ray.direction = refract(ray.direction, primaryResult.normal, AIR_REFRACTIVE_INDEX, primaryResult.material.refractiveIndex);
         float parentRefractIndex = primaryResult.material.refractiveIndex;
+        float parentOpacity = primaryResult.material.opacity;
         // Bounce limit is being used for penetration limit 
         for(int i = 0; i < config->bounceLimit; ++i){
             TraceResult result;
             trace_ray(input, &ray, &result);
 
             if(!result.hasIntersect){
-                accum = skybox_cubemap(config, skybox, ray.direction);
+                accum = mix(accum, skybox_cubemap(config, skybox, ray.direction), 1.0f - parentOpacity);
                 break;
             }else{
-                accum = mix(accum, result.material.diffuse, result.material.opacity);
+                accum = mix(accum, result.material.diffuse, parentOpacity);
 
                 // Set the origin of the secondary rays
                 ray.origin = result.intersect;
                 ray.direction = refract(ray.direction, -result.normal, parentRefractIndex, result.material.refractiveIndex);
                 parentRefractIndex = result.material.refractiveIndex;
+                parentOpacity = result.material.opacity;
             }
         }
     }
