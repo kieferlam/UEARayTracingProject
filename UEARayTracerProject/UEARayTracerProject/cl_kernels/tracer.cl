@@ -15,6 +15,8 @@ typedef struct{
 typedef struct __attribute__ ((aligned(16))){
     float3 diffuse;
     float reflectivity;
+    float opacity;
+    float refractiveIndex;
 } Material;
 
 typedef struct __attribute__ ((aligned(16))){
@@ -245,43 +247,64 @@ void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
 
 }
 
-void combine_ray(float3* value, TraceResult* result){
-    *value *= result->material.diffuse;
+float3 combine_reflect_ray(float3 diffuse, float reflectivity){
+    return diffuse * reflectivity;
 }
 
 float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox, Ray* primaryRay){
-    // Set to background value
-    float3 value = (float3)(1.0f, 1.0f, 1.0f);
+    float3 accum = (float3)(0.0f, 0.0f, 0.0f);
 
     Ray ray = *primaryRay;
-    float prevReflectivity = 1.0f;
-    bool hasIntersect = false;
-    int bounces = 0;
-    for(int i = 0; i < config->bounceLimit + 1; ++i){
-        TraceResult result;
-        trace_ray(input, &ray, &result);
 
-        if(!result.hasIntersect){
-            // If no intersect, add skybox value
-            value *= skybox_cubemap(config, skybox, ray.direction);
-            break;
-        }else{
-            hasIntersect = true;
-            bounces++;
-            combine_ray(&value, &result);
+    // Trace primary ray
+    TraceResult primaryResult;
+    trace_ray(input, &ray, &primaryResult);
 
-            ray.origin = result.intersect;
-            ray.direction = reflect(ray.direction, result.normal);
-
-            prevReflectivity = result.material.reflectivity;
-        }
-    }
-
-    if(!hasIntersect){
+    if(!primaryResult.hasIntersect){
         return skybox_cubemap(config, skybox, primaryRay->direction);
     }
 
-    return value;
+    
+    ray.origin = primaryResult.intersect;
+
+    // Primary diffuse
+    accum += primaryResult.material.diffuse;
+
+    // Trace secondary rays
+    
+    // Reflection
+    ray.direction = reflect(ray.direction, primaryResult.normal);
+    if(primaryResult.material.reflectivity > EPSILON){ // Only do reflection ray if it's reflective
+        Material parentMaterial = primaryResult.material;
+        for(int i = 0; i < config->bounceLimit; ++i){
+            TraceResult result;
+            trace_ray(input, &ray, &result);
+
+            if(!result.hasIntersect){
+                // If no intersect, add skybox value
+                accum = mix(accum, skybox_cubemap(config, skybox, ray.direction), parentMaterial.reflectivity);
+                break;
+            }else{
+                accum += mix(accum, result.material.diffuse, parentMaterial.reflectivity);
+
+                // Set the origin of the secondary rays
+                ray.origin = result.intersect;
+                ray.direction = reflect(ray.direction, result.normal);
+            }
+
+            parentMaterial = result.material;
+        }
+    }
+
+    // Refraction / Transparency
+    if(primaryResult.material.opacity < 1.0f - EPSILON){
+        // Bounce limit is being used for penetration limit 
+        for(int i = 0; i < config->bounceLimit; ++i){
+
+        }
+    }
+
+    return accum;
 }
 
 __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox){

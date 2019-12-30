@@ -87,8 +87,10 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 
 	// Spheres
 	for (int i = 0; i < 1; ++i) {
-		kernelInputStruct.spheres[i].material.diffuse = {0.9f, 0.9f, 1.0f};
-		kernelInputStruct.spheres[i].material.reflectivity = 1.0f;
+		kernelInputStruct.spheres[i].material.diffuse = { 0.4f, 0.3f, 0.9f };
+		kernelInputStruct.spheres[i].material.reflectivity = 0.1f;
+		kernelInputStruct.spheres[i].material.opacity = 1.0f;
+		kernelInputStruct.spheres[i].material.refractiveIndex = 0.5f;
 		kernelInputStruct.spheres[i].position = { 0.0f, 0.0f, 20.0f};
 		kernelInputStruct.spheres[i].radius = 10.0f;
 	}
