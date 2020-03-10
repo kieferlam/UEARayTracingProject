@@ -1,7 +1,7 @@
 #include "TracerKernel.h"
 #include <SOIL.h>
 
-void loadSkyboxTexture(unsigned char** skyboxImages, int* width, int* height) {
+void _loadSkyboxTexture(unsigned char** skyboxImages, int* width, int* height) {
 
 	// Load skybox textures
 	std::string skyboxFilePrefix = "data/skybox/";
@@ -26,7 +26,7 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 	// Load skybox texture
 	int skyboxWidth;
 	int skyboxHeight;
-	loadSkyboxTexture(skyboxImages, &skyboxWidth, &skyboxHeight);
+	_loadSkyboxTexture(skyboxImages, &skyboxWidth, &skyboxHeight);
 
 	// Create memory buffers
 	
@@ -56,11 +56,12 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 	}
 
 	// Skybox buffers
-	unsigned char* skbuf = new unsigned char[skyboxWidth * skyboxHeight * 3 * 6];
+	size_t rgbsize = (size_t)skyboxWidth * skyboxHeight * 3;
+	unsigned char* skbuf = new unsigned char[rgbsize * 6];
 	for (int i = 0; i < 6; ++i) {
-		memcpy(skbuf + (i * skyboxWidth * skyboxHeight * 3), skyboxImages[i], 3 * skyboxWidth * skyboxHeight * sizeof(unsigned char));
+		memcpy(skbuf + (i * rgbsize), skyboxImages[i], rgbsize * sizeof(unsigned char));
 	}
-	skyboxBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 6 * 3 * skyboxWidth * skyboxHeight * sizeof(unsigned char), skbuf, &err);
+	skyboxBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 6 * rgbsize * sizeof(unsigned char), skbuf, &err);
 	if (err != CL_SUCCESS) {
 		std::cout << "Error creating skybox buffer: " << cl::getErrorString(err) << std::endl;
 	}
@@ -89,8 +90,8 @@ bool TracerKernel::create(GLuint texture, int width, int height) {
 	for (int i = 0; i < 2; ++i) {
 		kernelInputStruct.spheres[i].material.diffuse = { 0.4f, 0.3f, 0.5f };
 		kernelInputStruct.spheres[i].material.reflectivity = i % 2 == 0 ? 1.0f : 0.0f;
-		kernelInputStruct.spheres[i].material.opacity = i % 2 == 0 ? 1.0f : 0.0f;
-		kernelInputStruct.spheres[i].material.refractiveIndex = 1.8f;
+		kernelInputStruct.spheres[i].material.opacity = 0.4f;
+		kernelInputStruct.spheres[i].material.refractiveIndex = 1.517f;
 		kernelInputStruct.spheres[i].position = { -20.0f + i * 40.0f, 0.0f, 50.0f};
 		kernelInputStruct.spheres[i].radius = 10.0f;
 
@@ -121,4 +122,7 @@ void TracerKernel::trace(cl_bool block) {
 	if (error != CL_SUCCESS) std::cout << "Error release GL objects: " << cl::getErrorString(error) << std::endl;
 
 	if(block) clFinish(cl::queue);
+}
+
+void TracerKernel::keyevent(int key, int scancode, int action, int mods) {
 }

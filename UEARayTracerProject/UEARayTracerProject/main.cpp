@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#define CL_TARGET_OPENCL_VERSION 210
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <CL/opencl.h>
@@ -8,8 +10,14 @@
 #include <string>
 #include <sstream>
 #include <stddef.h>
+#include <chrono>
 #include "cl_helper.h"
 #include "TracerKernel.h"
+#include "RARKernel.h"
+#include "ImageResolverKernel.h"
+#include "CLKernel.h"
+#include "World.h"
+#include "RayTraceKernel.h"
 
 #define WINDOW_WIDTH (1280)
 #define WINDOW_HEIGHT (720)
@@ -22,7 +30,15 @@
 
 GLFWwindow* window;
 
-TracerKernel kernel;
+RARKernel rarkernel;
+ImageResolverKernel imageKernel;
+RayTraceKernel raytracekernel;
+CLKernel* kernels[] = {
+	&raytracekernel
+};
+
+World world;
+RayConfig config;
 
 GLuint outputTexture;
 GLuint shaderProgram;
@@ -38,8 +54,8 @@ void error_callback(int code, const char* description) {
 	std::cout << "GLFW CALLBACK: " << code << " " << description << std::endl;
 }
 
-std::string readFile(const std::string& path) {
-	std::ifstream file(path);
+std::string readFile(const std::string path) {
+	std::ifstream file(path, std::ios::in);
 	return std::string(std::istreambuf_iterator<char>(file), (std::istreambuf_iterator<char>()));
 }
 
@@ -81,9 +97,13 @@ bool initGL() {
 }
 
 bool buildCL() {
-	// Add sources
-	std::string tracerSrc = readFile("cl_kernels/tracer.cl");
-	cl::addSource(tracerSrc);
+	const std::vector<std::string> sources = {
+		 "cl_kernels/raytrace.cl"
+	};
+
+	for (auto it = sources.begin(); it != sources.end(); ++it) {
+		cl::addSource(readFile(*it));
+	}
 
 	// Build
 	if (!cl::build()) {
@@ -226,6 +246,12 @@ void createRenderQuad() {
 	glDisableVertexAttribArray(1);
 }
 
+void setupEventHandlers() {
+	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+		
+	});
+}
+
 int main(void) {
 	
 	if (!initGL()) {
@@ -249,11 +275,41 @@ int main(void) {
 	// Create empty texture for kernel output
 	outputTexture = createEmptyTexture(IMAGE_WIDTH, IMAGE_HEIGHT);
 
-	// Create the kernel
-	if (!kernel.create(outputTexture, IMAGE_WIDTH, IMAGE_HEIGHT)) {
-		std::cout << "Failed to create kernel." << std::endl;
-		glfwTerminate();
-		return -1;
+	// Config
+	config.camera = { 0.0f, 0.0f, 0.0f };
+	config.screenDistance = 2.0f;
+	config.aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+	config.width = WINDOW_WIDTH;
+	config.height = WINDOW_HEIGHT;
+	config.bounces = 1;
+
+	world.create();
+	// Add spheres to world
+	int sphere1 = world.addSphere({ -20.0f, 0.0f, 50.0f }, 10.0f, { {0.4f, 0.3f, 0.5f}, 1.0f, 0.4f, 1.517f });
+	world.addSphere({ 20.0f, 0.0f, 50.0f }, 10.0f, { {0.4f, 0.3f, 0.5f}, 1.0f, 0.4f, 1.517f });
+	world.update();
+
+	/*rarkernel.setWorldPtr(&world);
+	rarkernel.setPrimaryConfig(&config);
+
+	imageKernel.setRayBuffer(rarkernel.getRayBuffer());
+	imageKernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
+	imageKernel.setTexture(outputTexture);
+	imageKernel.setRayConfig(rarkernel.getConfigBuffer());*/
+
+	raytracekernel.setPrimaryConfig(&config);
+	raytracekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
+	raytracekernel.setTexture(outputTexture);
+	raytracekernel.setWorldPtr(&world);
+
+	// Create kernels
+	for (int i = 0; i < sizeof(kernels) / sizeof(CLKernel*); ++i) {
+		if (!kernels[i]->createKernel()) {
+			std::cout << "Couldn't create kernel. Aborting." << std::endl;
+			return -1;
+		}
+		kernels[i]->create();
+		kernels[i]->update(); // Update once to upload data to buffers
 	}
 
 	// Setup OpenGL for rendering
@@ -270,14 +326,46 @@ int main(void) {
 	// Setup render quad
 	createRenderQuad();
 
-	// Send data
-	kernel.writeKernelInput(CL_TRUE);
+	setupEventHandlers();
+
+	// Time
+	auto starttime = std::chrono::system_clock::now();
+
+	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL;
+	cl_int worldUpdateStatus = -1, rarStatus = -1, imageStatus = -1;
 
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
+		// Time
+		std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - starttime;
 
-		// Trace
-		kernel.trace(CL_TRUE);
+		world.getSphere(sphere1)->position.x = 30.0f + cos(elapsed_time.count()) * 20.0f;
+		world.getSphere(sphere1)->position.z = 100.0f + sin(elapsed_time.count()) * 10.0f;
+		//cl::readEventStatus(imageEvent, &imageStatus);
+		//if ((imageEvent == NULL && worldUpdateEvent == NULL) || (imageStatus == CL_COMPLETE && worldUpdateStatus == CL_COMPLETE)) {
+		//	//std::cout << "Queueing world update." << std::endl;
+		worldUpdateEvent = world.updateSpheres(sphere1, 1);
+		//}
+
+		//cl::readEventStatus(worldUpdateEvent, &worldUpdateStatus);
+		//if ((imageEvent == NULL && rarEvent == NULL) || (worldUpdateStatus == CL_COMPLETE && rarStatus == CL_COMPLETE)) {
+		//	//std::cout << "Queueing RAR kernel." << std::endl;
+		//	rarEvent = rarkernel.queue();
+		//}
+
+		//cl::readEventStatus(rarEvent, &rarStatus);
+		//if (rarStatus == CL_COMPLETE && (imageStatus == CL_COMPLETE || imageEvent == NULL)) {
+		//	//std::cout << "Queueing image kernel." << std::endl;
+		//	imageEvent = imageKernel.queue();
+		//}
+
+
+		/*rarEvent = rarkernel.queue(0, NULL);
+		imageEvent = imageKernel.queue(1, &rarEvent);
+		clFinish(cl::queue);*/
+
+		raytracekernel.queue(0, NULL);
+		clFinish(cl::queue);
 
 		// Render
 		glUseProgram(shaderProgram);

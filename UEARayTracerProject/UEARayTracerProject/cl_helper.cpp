@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include "TracerKernel.h"
+#include "RARKernel.h"
 
 cl_platform_id retrievePlatform() {
 	cl_platform_id platforms[MAX_PLATFORMS];
@@ -95,9 +96,13 @@ namespace cl {
 	std::unordered_map<std::string, std::string> config;
 
 	// Local
-	std::vector<const char*> sources;
-	std::vector<size_t> sourceLengths;
+	std::vector<std::string> sources;
 
+
+	void printErrorMsg(std::string msg, int line, const char* filename, cl_int err) {
+		if (err == CL_SUCCESS) return;
+		std::cout << "Line " << line << " in " << filename << ": " << msg << ": " << cl::getErrorString(err) << std::endl;
+	}
 
 	std::string getErrorString(cl_int errorCode) {
 		switch (errorCode) {
@@ -175,6 +180,26 @@ namespace cl {
 		}
 	}
 
+	std::string getEventString(cl_int eventStatus) {
+		switch (eventStatus) {
+		case CL_QUEUED:
+			return "CL_QUEUED";
+		case CL_SUBMITTED:
+			return "CL_SUBMITTED";
+		case CL_RUNNING:
+			return "CL_RUNNING";
+		case CL_COMPLETE:
+			return "CL_COMPLETE";
+		default:
+			return "UNKNOWN_EVENT";
+		}
+	}
+
+	void readEventStatus(cl_event event, cl_int* status) {
+		if (event == NULL) return;
+		cl_int err = clGetEventInfo(event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), status, NULL);
+	}
+
 	bool init() {
 		// Load config
 		loadConfigFromFile(CONFIG_FILE, config);
@@ -228,9 +253,8 @@ namespace cl {
 
 	}
 
-	void addSource(const std::string& source) {
-		sources.push_back(source.c_str());
-		sourceLengths.push_back(source.length());
+	void addSource(const std::string source) {
+		sources.push_back(source);
 	}
 
 	std::string getBuildOptions() {
@@ -241,7 +265,7 @@ namespace cl {
 		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
 		if (getConfigBool("allWarnings")) stream << "-w ";
 		if (getConfigBool("makeWarningsErrors")) stream << "-Werror ";
-		if (getConfigBool("disableOptimisations")) stream << "-cl-opt-disable ";
+		if (getConfigBool("disableOptimisation")) stream << "-cl-opt-disable ";
 		if (getConfigBool("enableMad")) stream << "-cl-mad-enable ";
 		if (getConfigBool("enableUnsafeMaths")) stream << "-cl-unsafe-math-optimizations ";
 		if (getConfigBool("finiteMathsOnly")) stream << "-cl-finite-math-only ";
@@ -256,7 +280,15 @@ namespace cl {
 
 	bool build() {
 		cl_int err;
-		program = clCreateProgramWithSource(context, sources.size(), &sources[0], &sourceLengths[0], &err);
+
+		std::vector<const char*> srcvec;
+		std::vector<size_t> srclen;
+		for (auto it = sources.begin(); it != sources.end(); ++it) {
+			srcvec.push_back(it->c_str());
+			srclen.push_back(it->length());
+		}
+
+ 		program = clCreateProgramWithSource(context, sources.size(), &srcvec[0], &srclen[0], &err);
 		if (err != NULL) {
 			std::cout << "Program creation error: " << getErrorString(err) << std::endl;
 		}
@@ -266,6 +298,7 @@ namespace cl {
 		err = clBuildProgram(program, 1, &device, buildOptions.c_str(), NULL, NULL);
 		if (err == CL_SUCCESS) {
 			queue = clCreateCommandQueueWithProperties(context, device, NULL, &err);
+			sources.clear(); // Deallocate sources
 			if (err == NULL) return true;
 			std::cout << "Could not create command queue: " << getErrorString(err) << std::endl;
 			return false;

@@ -140,12 +140,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cl_helper.cpp" />
+    <ClCompile Include="ImageResolverKernel.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RARKernel.cpp" />
+    <ClCompile Include="RayTraceKernel.cpp" />
     <ClCompile Include="TracerKernel.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CLKernel.h" />
     <ClInclude Include="cl_helper.h" />
+    <ClInclude Include="ImageResolverKernel.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="RARKernel.h" />
+    <ClInclude Include="RayTraceKernel.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="TracerKernel.h" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cl_kernels\tracer.cl" />

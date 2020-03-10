@@ -3,9 +3,16 @@
 
 #define EPSILON (0.001f)
 
-#define AIR_REFRACTIVE_INDEX (1.0f)
+#define MAX_STACK (32)
+
+#define DEFAULT_BG ((float3)(0.0f, 0.0f, 0.0f))
+
+#define AIR_REFRACTIVE_INDEX (1.0003f)
 
 #define MAX_VALUE (0xFFFFFFFF)
+
+// typedef
+typedef __constant unsigned char* SKYBOX;
 
 __constant float3 FORWARD = (float3)(0.0f, 0.0f, 1.0f);
 
@@ -46,15 +53,18 @@ typedef struct __attribute__ ((aligned(32))){
     int refraction;
 } RTConfig;
 
-typedef struct {
-    bool hasIntersect;
-    float T;
-    float T2;
+typedef struct TraceResult TraceResult;
+struct TraceResult{
+    Material material;
     float3 intersect;
     float3 normal;
+    float T;
+    float T2;
+    float cosine;
     int sphereIndex;
-    Material material;
-} TraceResult;
+    int bounce;
+    bool hasIntersect;
+};
 
 typedef struct {
     float minT;
@@ -104,7 +114,7 @@ bool sphere_intersect(Ray* ray, __constant SphereStruct* sphere, SphereIntersect
     SKYBOX
  */
 
-float3 skybox_cubemap(__constant RTConfig* config, __constant unsigned char* skybox_data, float3 dir){
+float3 skybox_cubemap(__constant RTConfig* config, SKYBOX skybox_data, float3 dir){
 
     // If skybox disabled, return black
     if(!config->skybox) return (float3)(0.0f, 0.0f, 0.0f);
@@ -208,12 +218,16 @@ float3 reflect(float3 in, float3 normal){
 float3 refract(float3 incident, float3 normal, float n1, float n2){
     float n = n1 / n2;
     float cosI = -dot(normal, incident);
-    float sinT2 = n * n * (1.0f - cosI*cosI);
+    float sinT2 = SQ(n) * (1.0f - SQ(cosI));
     if(sinT2 > 1.0f) return incident; // Total internal reflection
     float cosT = sqrt(1.0 - sinT2);
     return n * incident + (n * cosI - cosT) * normal;
 }
 
+/**
+This function just calculates the intersections of a ray and the scene/world.
+Image processing and ray-combination should happen elsewhere.
+*/
 void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
     // Sphere intersection
     SphereIntersect closest_intersect = {MAX_VALUE, MAX_VALUE};
@@ -252,13 +266,88 @@ void trace_ray(__constant KernelInput* input, Ray* ray, TraceResult* result){
 
     // Find the normal of the sphere
     result->normal = sphere_normal(&input->spheres[result->sphereIndex], result->intersect);
+    result->cosine = dot(ray->direction, result->normal);
 
     // Get material
     result->material = input->spheres[result->sphereIndex].material;
 
 }
 
-float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox, Ray* primaryRay){
+/**
+Determines the colour of a ray based on the material information in the TraceResult struct.
+*/
+float3 processRayColour(__constant RTConfig* config, SKYBOX skybox, TraceResult* result){
+    if(!result->hasIntersect){
+        return skybox_cubemap(config, skybox, result->normal);
+    }
+    return result->material.diffuse;
+}
+
+float3 mixParentChildRay(float3 parent, float3 child, float opacity){
+    return mix(parent, child, opacity);
+}
+
+float3 raytrace_recurseWithStack(__constant KernelInput* input, __constant RTConfig* config, SKYBOX skybox, Ray* primaryRay){
+    // Recurse Stack Parameters and Trackers
+    Ray rayStack[MAX_STACK];            // Stack containing ray structs
+    TraceResult traceStack[MAX_STACK];  // Stack containing ray trace results
+    float3 returnStack[MAX_STACK];      // Stack containing colour result of the ray trace. Used in the return iterator
+    int2 mixStack[MAX_STACK];           // Stack containing the indices for which to mix the current result in returnStack with child ray results.
+    int stackLength = 0;
+    
+    // Add primary ray to stack
+    rayStack[0] = *primaryRay;
+    stackLength++;
+
+    // Forward iteration, what happens before the recursive call
+    for(int stackindex = 0; stackindex < stackLength; --stackindex){
+        // Trace ray
+        trace_ray(input, rayStack + stackindex, traceStack + stackindex);
+        // Reset mix stack indices
+        mixStack[stackindex][0] = -1;
+        mixStack[stackindex][1] = -1;
+        
+        // Get diffuse colour for ray
+        returnStack[stackindex] = processRayColour(config, skybox, traceStack + stackindex);
+
+        // Exit iteration early if no intersect OR if reached max stack (-2 because 2 rays can stem from the parent ray)
+        if(!traceStack[stackindex].hasIntersect || stackindex == MAX_STACK - 2) continue;
+
+        // Add new rays to stack
+        // If material is reflective at all, add reflection ray
+        if(traceStack[stackindex].material.reflectivity > EPSILON){
+            rayStack[stackLength++].origin = traceStack[stackindex].intersect;
+            rayStack[stackLength].direction = reflect(rayStack[stackindex].direction, traceStack[stackindex].normal);
+            mixStack[stackindex][0] = stackLength;
+        }
+        // If material is transparent at all, add refraction ray
+        if(traceStack[stackindex].material.opacity < EPSILON){
+            rayStack[stackLength++].origin = traceStack[stackindex].intersect;
+            rayStack[stackLength].direction = refract(rayStack[stackindex].direction, -traceStack[stackindex].normal, AIR_REFRACTIVE_INDEX, traceStack[stackindex].material.refractiveIndex);
+            mixStack[stackindex][1] = stackLength;
+        }
+    }
+
+    // Return iteration, what happens after the recursive call
+    for(int stackindex = stackLength-1; stackindex >= 0; --stackindex){
+        float3 mixaccum;
+        // If ray has a reflective child ray and refractive
+        if(mixStack[stackindex][0] > -1 && mixStack[stackindex][1] > -1){
+            // Cosine weight for fresnel effect
+            float3 reflect = returnStack[mixStack[stackindex][0]];
+            float3 refract = returnStack[mixStack[stackindex][1]];
+            mixaccum = mix(reflect, refract, traceStack[stackindex].cosine);
+        }else{
+            mixaccum = mixStack[stackindex][0] > -1 ? returnStack[mixStack[stackindex][0]] : returnStack[mixStack[stackindex][1]];
+        }
+
+        returnStack[stackindex] = mix(mixaccum, returnStack[stackindex], traceStack[stackindex].material.opacity);
+    }
+
+    return returnStack[0];
+}
+
+float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, SKYBOX skybox, Ray* primaryRay){
     float3 accum = (float3)(0.0f, 0.0f, 0.0f);
 
     Ray ray = *primaryRay;
@@ -273,8 +362,6 @@ float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __c
 
     // Primary diffuse
     accum += primaryResult.material.diffuse;
-
-    // Trace secondary rays
 
     // Reflection
     if(config->reflection && primaryResult.material.reflectivity > EPSILON){ // Only do reflection ray if it's reflective enough to matter
@@ -330,7 +417,7 @@ float3 trace_raw(__constant KernelInput* input, __constant RTConfig* config, __c
     return accum;
 }
 
-__kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input, __constant RTConfig* config, __constant unsigned char* skybox){
+__kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* input, __constant RTConfig* config, SKYBOX skybox){
     // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
@@ -347,7 +434,7 @@ __kernel void TracerMain(__write_only image2d_t image, __constant KernelInput* i
     float4 final = (float4)(1.0f, 1.0f, 1.0f, 1.0f);
     float exposure = 1.0f;
 
-    float3 raw = trace_raw(input, config, skybox, &primaryRay);
+    float3 raw = raytrace_recurseWithStack(input, config, skybox, &primaryRay);
 
     final = (float4)(raw, 0.0f) * exposure;
     

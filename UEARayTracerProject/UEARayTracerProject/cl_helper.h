@@ -1,7 +1,5 @@
 #pragma once
 
-#define CL_TARGET_OPENCL_VERSION 210
-
 #include <CL/opencl.h>
 #include <vector>
 #include <iostream>
@@ -28,11 +26,15 @@ namespace cl {
 
 	extern std::unordered_map<std::string, std::string> config;
 
+	void printErrorMsg(std::string msg, int line, const char* filename, cl_int err);
 	std::string getErrorString(cl_int errorCode);
+	std::string getEventString(cl_int eventStatus);
+
+	void readEventStatus(cl_event event, cl_int* status);
 
 	bool init();
 
-	void addSource(const std::string& source);
+	void addSource(const std::string source);
 
 	bool build();
 

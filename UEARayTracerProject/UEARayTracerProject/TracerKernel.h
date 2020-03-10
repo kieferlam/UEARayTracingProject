@@ -5,21 +5,8 @@
 #include <time.h>
 #include <stdio.h>
 #include "cl_helper.h"
-
-#define MAX_SPHERES (8)
-
-__declspec (align(16)) struct Material {
-	cl_float3 diffuse;
-	cl_float reflectivity;
-	cl_float opacity;
-	cl_float refractiveIndex;
-};
-
-__declspec (align(16)) struct SphereStruct {
-	Material material;
-	cl_float3 position;
-	cl_float radius;
-};
+#include "Sphere.h"
+#include "Material.h"
 
 __declspec (align(32)) struct RTConfig {
 	cl_int2 skyboxSize;
@@ -36,7 +23,7 @@ __declspec (align(16)) struct KernelInputStruct {
 	cl_float height;
 	cl_float screenDistance;
 	cl_float3 camera;
-	SphereStruct spheres[MAX_SPHERES];
+	Sphere spheres[8];
 	int numSpheres;
 };
 
@@ -68,6 +55,8 @@ public:
 	void writeKernelInput(cl_bool block);
 
 	void trace(cl_bool block);
+
+	void keyevent(int key, int scancode, int action, int mods);
 
 };
 
