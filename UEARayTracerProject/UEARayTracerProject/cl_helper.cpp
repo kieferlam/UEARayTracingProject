@@ -261,7 +261,9 @@ namespace cl {
 		std::ostringstream stream;
 		stream << BUILD_OPTIONS
 			<< " -D MAX_SPHERES=" << MAX_SPHERES
-			<< " ";
+			<< " "
+			<< " -D MAX_TRIANGLES=" << MAX_TRIANGLES
+			<< " "; 
 		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
 		if (getConfigBool("allWarnings")) stream << "-w ";
 		if (getConfigBool("makeWarningsErrors")) stream << "-Werror ";

@@ -48,3 +48,9 @@ void getRefractDirection(float3* direction_out, float3 direction_in, float3 norm
     float cosT = sqrt(1.0f - sinT2);
     *direction_out = n * direction_in + (n * cosI - cosT) * normal;
 }
+
+float triangle_intersect_T(Ray* ray, __constant Triangle* triangle, __constant float3* vertices){
+    float d = dot(triangle->normal, vertices[triangle->vertices[0]]);
+    float t = -(dot(triangle->normal, ray->origin) + d) / dot(triangle->normal, ray->direction);
+    return t;
+}

@@ -290,6 +290,7 @@ __kernel void RayTrace(__write_only image2d_t image, __constant RayConfig* confi
         treeStack[stackHead].result = results;
         treeStack[stackHead].offset = 0;
         treeStack[stackHead].visit = 0;
+        treeStack[stackHead].type = 0;
 
         // Add rays and their bounces to stack
         while(stackHead >= 0){

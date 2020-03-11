@@ -27,8 +27,16 @@ typedef struct __attribute__ ((aligned(16))){
 } Sphere;
 
 typedef struct __attribute__ ((aligned(16))) {
+    float3 normal;
+	int3 vertices;
+	int materialIndex;
+} Triangle;
+
+typedef struct __attribute__ ((aligned(16))) {
 	Sphere spheres[MAX_SPHERES];
+	Triangle triangles[MAX_TRIANGLES];
 	int numSpheres;
+    int numTriangles;
 } World;
 
 typedef struct TraceResult TraceResult;
@@ -50,7 +58,6 @@ typedef struct {
     float minT;
     float maxT;
 } SphereIntersect;
-
 
 typedef struct __attribute__ ((aligned(16))){
     int2 skyboxSize;

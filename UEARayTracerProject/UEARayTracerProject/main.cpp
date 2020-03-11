@@ -31,10 +31,10 @@
 GLFWwindow* window;
 
 RARKernel rarkernel;
-ImageResolverKernel imageKernel;
+ImageResolverKernel imagekernel;
 RayTraceKernel raytracekernel;
 CLKernel* kernels[] = {
-	&raytracekernel
+	&rarkernel, &imagekernel
 };
 
 World world;
@@ -98,7 +98,9 @@ bool initGL() {
 
 bool buildCL() {
 	const std::vector<std::string> sources = {
-		 "cl_kernels/raytrace.cl"
+		 //"cl_kernels/raytrace.cl",
+		 "cl_kernels/rarkernel.cl",
+		 "cl_kernels/imageresolver.cl"
 	};
 
 	for (auto it = sources.begin(); it != sources.end(); ++it) {
@@ -289,18 +291,18 @@ int main(void) {
 	world.addSphere({ 20.0f, 0.0f, 50.0f }, 10.0f, { {0.4f, 0.3f, 0.5f}, 1.0f, 0.4f, 1.517f });
 	world.update();
 
-	/*rarkernel.setWorldPtr(&world);
+	rarkernel.setWorldPtr(&world);
 	rarkernel.setPrimaryConfig(&config);
 
-	imageKernel.setRayBuffer(rarkernel.getRayBuffer());
-	imageKernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
-	imageKernel.setTexture(outputTexture);
-	imageKernel.setRayConfig(rarkernel.getConfigBuffer());*/
+	imagekernel.setRayBuffer(rarkernel.getRayBuffer());
+	imagekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
+	imagekernel.setTexture(outputTexture);
+	imagekernel.setRayConfig(rarkernel.getConfigBuffer());
 
-	raytracekernel.setPrimaryConfig(&config);
+	/*raytracekernel.setPrimaryConfig(&config);
 	raytracekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
 	raytracekernel.setTexture(outputTexture);
-	raytracekernel.setWorldPtr(&world);
+	raytracekernel.setWorldPtr(&world);*/
 
 	// Create kernels
 	for (int i = 0; i < sizeof(kernels) / sizeof(CLKernel*); ++i) {
@@ -341,30 +343,11 @@ int main(void) {
 
 		world.getSphere(sphere1)->position.x = 30.0f + cos(elapsed_time.count()) * 20.0f;
 		world.getSphere(sphere1)->position.z = 100.0f + sin(elapsed_time.count()) * 10.0f;
-		//cl::readEventStatus(imageEvent, &imageStatus);
-		//if ((imageEvent == NULL && worldUpdateEvent == NULL) || (imageStatus == CL_COMPLETE && worldUpdateStatus == CL_COMPLETE)) {
-		//	//std::cout << "Queueing world update." << std::endl;
+
 		worldUpdateEvent = world.updateSpheres(sphere1, 1);
-		//}
 
-		//cl::readEventStatus(worldUpdateEvent, &worldUpdateStatus);
-		//if ((imageEvent == NULL && rarEvent == NULL) || (worldUpdateStatus == CL_COMPLETE && rarStatus == CL_COMPLETE)) {
-		//	//std::cout << "Queueing RAR kernel." << std::endl;
-		//	rarEvent = rarkernel.queue();
-		//}
-
-		//cl::readEventStatus(rarEvent, &rarStatus);
-		//if (rarStatus == CL_COMPLETE && (imageStatus == CL_COMPLETE || imageEvent == NULL)) {
-		//	//std::cout << "Queueing image kernel." << std::endl;
-		//	imageEvent = imageKernel.queue();
-		//}
-
-
-		/*rarEvent = rarkernel.queue(0, NULL);
-		imageEvent = imageKernel.queue(1, &rarEvent);
-		clFinish(cl::queue);*/
-
-		raytracekernel.queue(0, NULL);
+		rarEvent = rarkernel.queue(0, NULL);
+		imageEvent = imagekernel.queue(1, &rarEvent);
 		clFinish(cl::queue);
 
 		// Render

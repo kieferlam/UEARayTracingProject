@@ -14,7 +14,7 @@ void RARKernel::read() {
 
 void RARKernel::create() {
 
-	int numrays = pow(2, config->bounces) - 1;
+	int numrays = pow(2, config->bounces + 1) - 1;
 
 	// Assume kernel object has been created
 

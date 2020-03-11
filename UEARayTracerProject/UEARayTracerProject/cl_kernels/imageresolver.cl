@@ -5,13 +5,16 @@
 #include "func.h"
 #endif
 
+
 typedef struct __attribute__ ((aligned(16))){
     TraceResult* result;
+    TraceResult* parent;
     uint offset;
     uint visit;
+    uint type; // 0 = -; 1 = reflection; 2 = refraction
 }RayTraceNode;
 
-float3 skybox_cubemap(__constant ImageResolverConfig* config, SKYBOX skybox_data, float3 dir){
+float3 skybox_cubemap(__constant ImageConfig* config, SKYBOX skybox_data, float3 dir){
 
     const int skybox_img_size = config->skyboxSize.x * config->skyboxSize.y * 3;
     int face = 0;
@@ -101,25 +104,26 @@ float3 skybox_cubemap(__constant ImageResolverConfig* config, SKYBOX skybox_data
     return (float3)(r, g, b);
 }
 
-__kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* rayConfig, __constant ImageResolverConfig* config, __constant TraceResult* results, SKYBOX skybox){
+__kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* config, __constant ImageConfig* imageConfig, __constant TraceResult* results, SKYBOX skybox){
     // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
     
-    int rayindex = (idx + idy * rayConfig->width) * rayConfig->bounces;
+    int baseIndex = (idx + idy * config->width) * config->bounces;
+    __constant TraceResult* baseResult = results + baseIndex;
 
-    int numRays = rar_getNumRays(rayConfig->bounces);
+    int numRays = rar_getNumRays(config->bounces);
 
     float3 final = {0.0f, 0.0f, 0.0f};
 
-    if(!results[rayindex].hasIntersect){
-        final = skybox_cubemap(config, skybox, results[rayindex].ray.direction);
+    if(!baseResult->hasIntersect){
+        final = skybox_cubemap(imageConfig, skybox, baseResult->ray.direction);
     }else{
         
         // Copy local results
         TraceResult localResults[64];
         for(int i = 0; i < numRays; ++i){
-            localResults[i] = results[rayindex + i];
+            localResults[i] = baseResult[i];
         }
 
         // Stack for ray bounce processing
@@ -130,6 +134,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* r
         treeStack[stackHead].result = localResults;
         treeStack[stackHead].offset = 0;
         treeStack[stackHead].visit = 0;
+        treeStack[stackHead].type = 0;
 
         // Add rays and their bounces to stack
         while(stackHead >= 0){
@@ -140,33 +145,45 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* r
             Visit 2: Process Current Node
              */
 
-            RayTraceNode* currentNode = treeStack + stackHead;
+             RayTraceNode* currentNode = treeStack + stackHead;
 
             if(currentNode->visit == 0){
                 int reflectChildIndex = rar_getReflectChild(currentNode->offset);
                 if(reflectChildIndex < numRays){
-                    if(localResults[reflectChildIndex].hasTraced){
+                    if(localResults[reflectChildIndex].hasTraced){ // Reflect child node
                         // Add reflect trace to stack
-                        treeStack[stackHead].result = localResults + reflectChildIndex;
-                        treeStack[stackHead].offset = reflectChildIndex;
-                        treeStack[stackHead++].visit = 0;
+                        stackHead++;
+                        RayTraceNode* reflectNode = treeStack + stackHead;
+                        reflectNode->result = localResults + reflectChildIndex;
+                        reflectNode->parent = currentNode->result;
+                        reflectNode->offset = reflectChildIndex;
+                        reflectNode->visit = 0;
+                        reflectNode->type = 1;
                     }
                 }
             }else if(currentNode->visit == 1){
-                // int refractChildIndex = rar_getRefractChild(currentNode->offset);
-                // if(refractChildIndex < numRays){
-                //     if(localResults[refractChildIndex].hasTraced){
-                //         // Add refract trace to stack
-                //         treeStack[stackHead].result = localResults + refractChildIndex;
-                //         treeStack[stackHead].offset = refractChildIndex;
-                //         treeStack[stackHead++].visit = 0;
-                //     }
-                // }
+                int refractChildIndex = rar_getRefractChild(currentNode->offset);
+                if(refractChildIndex < numRays){
+                    if(localResults[refractChildIndex].hasTraced){
+                        // Add refract trace to stack
+                        stackHead++;
+                        RayTraceNode* refractNode = treeStack + stackHead;
+                        refractNode->result = localResults + refractChildIndex;
+                        refractNode->parent = currentNode->result;
+                        refractNode->offset = refractChildIndex;
+                        refractNode->visit = 0;
+                        refractNode->type = 2;
+                    }
+                }
             }else{
                 if(currentNode->result->hasIntersect){
                     final = mix(final, currentNode->result->material.diffuse, 0.5f);
                 }else{
-                    final = mix(final, skybox_cubemap(config, skybox, currentNode->result->ray.direction), 0.5f);
+                    if(currentNode->type == 1){
+                        final = mix(final, skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction), 0.5f);
+                    }else if(currentNode->type == 2){
+                        final = mix(final, skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction), 0.2f);
+                    }
                 }
                 stackHead--;
             }
@@ -177,7 +194,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* r
     }
 
     // Write colour
-    int2 coord = {idx, config->res.y - idy - 1};
+    int2 coord = {idx, imageConfig->res.y - idy - 1};
     float4 colour = {final.x, final.y, final.z, 1.0f};
     write_imagef(image, coord, colour);
 }

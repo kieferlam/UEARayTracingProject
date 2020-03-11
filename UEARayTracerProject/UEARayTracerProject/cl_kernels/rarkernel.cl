@@ -137,20 +137,20 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
     int offset = (idx + (int)(idy * config->width)) * config->bounces;
     __global TraceResult* baseResult = results + offset;
     
-    generateEyeRay(&results[offset].ray, config, idx, idy);
+    generateEyeRay(&baseResult->ray, config, idx, idy);
 
     // Queue for processing new rays
-    int currentIndex = 0;
+    int queueTail = 0;
     int offsets[256];
-    offsets[currentIndex] = 0;
+    offsets[queueTail] = 0;
 
-    for(int i = 0; i <= currentIndex; ++i){
+    for(int i = 0; i <= queueTail; ++i){
         int rayOffset = offsets[i];
         __global TraceResult* result = baseResult + rayOffset;
         Ray r = result->ray;
         trace(config, world, &r, result);
 
-        if(rar_getBounceNumber(offsets[i]) >= config->bounces - 1) continue;
+        if(rar_getBounceNumber(offsets[i]) >= config->bounces) continue;
         
         // If intersect, add more rays
         if(result->hasIntersect){
@@ -161,29 +161,28 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
             TraceResult localResult = *result;
 
             // Queue reflection ray
-            currentIndex++;
-            offsets[currentIndex] = rar_getReflectChild(offsets[i]);
+            queueTail++;
+            offsets[queueTail] = rar_getReflectChild(offsets[i]);
             // Create ray
-            results[offsets[currentIndex] + offset].ray.origin = localResult.intersect;
-            getReflectDirection(&results[offsets[currentIndex]].ray.direction, r.direction, localResult.normal);
+            baseResult[offsets[queueTail]].ray.origin = result->intersect;
+            getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, result->normal);
 
             // Find exit ray
-            // Ray internal_ray; // This is the ray which will be traced inside the transparent object
-            // internal_ray.origin = localResult.intersect;
-            // local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, localResult.material.refractiveIndex);
-            // TraceResult refract_exit_result;
-            // trace_refract_exit(config, world, &localResult, &internal_ray, &refract_exit_result);
-            // // Queue refraction ray
-            // currentIndex++;
-            // offsets[currentIndex] = rar_getRefractChild(offsets[i]);
-            // if(refract_exit_result.hasIntersect){
-            //     results[offsets[currentIndex] + offset].ray.origin = localResult.intersect;
-            //     getRefractDirection(&results[offsets[currentIndex] + offset].ray.direction, internal_ray.direction, refract_exit_result.normal, refract_exit_result.material.refractiveIndex, AIR_REFRACTIVE_INDEX);
-            // }else{
-            //     results[offsets[currentIndex] + offset].ray.origin = refract_exit_result.intersect;
-            //     getRefractDirection(&results[offsets[currentIndex] + offset].ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, localResult.material.refractiveIndex);
-            // }
+            Ray internal_ray; // This is the ray which will be traced inside the transparent object
+            internal_ray.origin = result->intersect;
+            getRefractDirection(&internal_ray.direction, r.direction, result->normal, AIR_REFRACTIVE_INDEX, result->material.refractiveIndex);
+            TraceResult refract_exit_result;
+            trace_refract_exit(config, world, result, &internal_ray, &refract_exit_result);
+            // Queue refraction ray
+            queueTail++;
+            offsets[queueTail] = rar_getRefractChild(offsets[i]);
+            if(refract_exit_result.hasIntersect){
+                baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
+                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refract_exit_result.material.refractiveIndex, AIR_REFRACTIVE_INDEX);
+            }else{
+                baseResult[offsets[queueTail]].ray.origin = result->intersect;
+                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, result->normal, AIR_REFRACTIVE_INDEX, result->material.refractiveIndex);
+            }
         }
-
     }
 }

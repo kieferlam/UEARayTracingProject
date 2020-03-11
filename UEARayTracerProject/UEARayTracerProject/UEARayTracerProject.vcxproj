@@ -156,6 +156,7 @@
     <ClInclude Include="RayTraceKernel.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="TracerKernel.h" />
+    <ClInclude Include="Triangle.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
