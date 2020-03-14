@@ -7,5 +7,8 @@
 
 #define MAX_VALUE (0xFFFFFFFF)
 
+#define SPHERE_TYPE (0)
+#define TRIANGLE_TYPE (1)
+
 // types
 typedef __constant unsigned char* SKYBOX;

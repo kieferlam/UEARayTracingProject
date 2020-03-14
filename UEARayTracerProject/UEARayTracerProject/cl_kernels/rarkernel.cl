@@ -44,6 +44,47 @@ bool sphere_intersect(Ray* ray, __constant Sphere* sphere, SphereIntersect* resu
     return true;
 }
 
+bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constant float3* vertices, float3* intersect, float* T){
+    // Copy to local/generic memory for faster operations
+    Triangle triangle = *const_triangle;
+
+    // Find P
+
+    // Check if ray and triangle are parallel
+    float nDotRayDirection = dot(triangle.normal, ray->direction);
+    if(fabs(nDotRayDirection) < EPSILON){ // They are parallel so they do not intersect
+        return false;
+    }
+
+    // Get T
+    *T = triangle_intersect_T(ray, &triangle, vertices);
+    if(*T < 0) return false; // Triangle is behind ray
+
+    // Compute ray plane intersect
+    *intersect = ray->origin + ray->direction * (*T);
+
+// TODO: Could maybe optimize by storing vertices in private work item memory (generic or private)
+    // Find if the point on the triangle plane is outside the triangle
+    float3 C;
+
+    float3 edge1 = vertices[triangle.vertices[1]] - vertices[triangle.vertices[0]];
+    float3 vp1 = *intersect - vertices[triangle.vertices[0]];
+    C = cross(edge1, vp1);
+    if(dot(triangle.normal, C) < 0) return false; // Intersect point is on the right side of the edge (therefore not in the triangle)
+
+    float3 edge2 = vertices[triangle.vertices[2]] - vertices[triangle.vertices[1]];
+    float3 vp2 = *intersect - vertices[triangle.vertices[1]];
+    C = cross(edge2, vp2);
+    if(dot(triangle.normal, C) < 0) return false;
+
+    float3 edge3 = vertices[triangle.vertices[0]] - vertices[triangle.vertices[2]];
+    float3 vp3 = *intersect - vertices[triangle.vertices[2]];
+    C = cross(edge3, vp3);
+    if(dot(triangle.normal, C) < 0) return false;
+
+    return true;
+}
+
 /**
     RAY TRACE
  */
@@ -65,11 +106,13 @@ float3 refract(float3 incident, float3 normal, float n1, float n2){
 This function just calculates the intersections of a ray and the scene/world.
 Image processing and ray-combination should happen elsewhere.
 */
-void trace(__constant RayConfig* input, __constant World* world, Ray* ray, __global TraceResult* result){
+void trace(__constant RayConfig* input, __constant World* world, __constant float3* vertices, Ray* ray, __global TraceResult* result){
     result->hasTraced = true;
     // Sphere intersection
-    SphereIntersect closest_intersect = {MAX_VALUE, MAX_VALUE};
+    float closest_T = MAX_VALUE;
+    float closest_T2 = 0;
     int closest_i = -1;
+    int closest_type = -1;
     for(int i = 0; i < world->numSpheres; ++i){
         __constant Sphere* sphere = &world->spheres[i];
 
@@ -84,9 +127,29 @@ void trace(__constant RayConfig* input, __constant World* world, Ray* ray, __glo
         if(!sphere_intersect(ray, sphere, &intersect_result)) continue;
 
         // Check if closer
-        if(intersect_result.minT < closest_intersect.minT){
-            closest_intersect = intersect_result;
+        if(intersect_result.minT < closest_T){
+            closest_T = intersect_result.minT;
+            closest_T2 = intersect_result.maxT;
             closest_i = i;
+            closest_type = SPHERE_TYPE;
+        }
+    }
+
+    // Triangle intersections
+    int closest_triangle = -1;
+    for(int i = 0; i < world->numTriangles; ++i){
+        __constant Triangle* triangle = world->triangles + i;
+
+        float3 intersect;
+        float T;
+
+        if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+        if(T < closest_T){
+            closest_T = T;
+            closest_T2 = T;
+            closest_i = i;
+            closest_type = TRIANGLE_TYPE;
         }
     }
 
@@ -97,44 +160,60 @@ void trace(__constant RayConfig* input, __constant World* world, Ray* ray, __glo
     }
 
     result->hasIntersect = true;
-    result->T = closest_intersect.minT;
-    result->T2 = closest_intersect.maxT;
+    result->T = closest_T;
+    result->T2 = closest_T2;
     result->intersect = ray->origin + ray->direction * result->T;
-    result->sphereIndex = closest_i;
+    result->objectIndex = closest_i;
 
     // Find the normal of the sphere
-    result->normal = sphere_normal(&world->spheres[result->sphereIndex], result->intersect);
-    result->cosine = dot(ray->direction, result->normal);
-
-    // Get material
-    result->material = world->spheres[result->sphereIndex].material;
+    if(result->objectType == SPHERE_TYPE){
+        result->normal = sphere_normal(&world->spheres[result->objectIndex], result->intersect);
+        result->material = world->spheres[result->objectIndex].material;
+    }else if(result->objectType == TRIANGLE_TYPE){
+        result->normal = world->triangles[closest_i].normal;
+        result->material = world->triangles[result->objectIndex].materialIndex;
+    }
+    result->cosine = SQ(dot(ray->direction, result->normal));
 
 }
 
-void trace_refract_exit(__constant RayConfig* config, __constant World* world, TraceResult* entry_result, Ray* ray, TraceResult* result){
+void trace_refract_exit(__constant RayConfig* config, __constant World* world, __constant float3* vertices, TraceResult* entry_result, Ray* ray, TraceResult* result){
     result->hasTraced = true;
 
     // Find intersection
-    SphereIntersect intersect_result;
-    result->hasIntersect = sphere_intersect(ray, &world->spheres[entry_result->sphereIndex], &intersect_result);
+    // Determine type
+    if(entry_result->objectType == SPHERE_TYPE){
+        SphereIntersect intersect_result;
+        result->hasIntersect = sphere_intersect(ray, &world->spheres[entry_result->objectIndex], &intersect_result);
 
-    result->T = intersect_result.minT;
-    result->T2 = intersect_result.maxT;
-    result->intersect = ray->origin + ray->direction * result->T;
-    result->sphereIndex = entry_result->sphereIndex;
+        result->T = intersect_result.minT;
+        result->T2 = intersect_result.maxT;
+        result->intersect = ray->origin + ray->direction * result->T;
+    }else{
+        result->hasIntersect = triangle_intersect(ray, &world->triangles[entry_result->objectIndex], vertices, &result->intersect, &result->T);
+        result->T2 = result->T;
+    }
+    result->objectIndex = entry_result->objectIndex;
 
-    result->normal = sphere_normal(&world->spheres[result->sphereIndex], result->intersect);
-    result->cosine = dot(ray->direction, result->normal);
+    if(!result->hasIntersect) return;
 
-    result->material = world->spheres[result->sphereIndex].material;
+    if(entry_result->objectType == SPHERE_TYPE){
+        result->normal = sphere_normal(&world->spheres[result->objectIndex], result->intersect);
+        result->material = world->spheres[result->objectIndex].material;
+    }else if(entry_result->objectType == TRIANGLE_TYPE){
+        result->normal = world->triangles[result->objectIndex].normal;
+        result->material = world->triangles[result->objectIndex].materialIndex;
+    }
+
+    result->cosine = SQ(dot(ray->direction, result->normal));
 }
 
-__kernel void RARTrace(__constant RayConfig* config, __constant World* world, __global TraceResult* results){
+__kernel void RARTrace(__constant RayConfig* config, __constant World* world, __global TraceResult* results, __constant float3* vertices, __constant Material* materials){
     // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
 
-    int offset = (idx + (int)(idy * config->width)) * config->bounces;
+    int offset = (idx + (int)(idy * config->width)) * rar_getNumRays(config->bounces);
     __global TraceResult* baseResult = results + offset;
     
     generateEyeRay(&baseResult->ray, config, idx, idy);
@@ -148,7 +227,7 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
         int rayOffset = offsets[i];
         __global TraceResult* result = baseResult + rayOffset;
         Ray r = result->ray;
-        trace(config, world, &r, result);
+        trace(config, world, vertices, &r, result);
 
         if(rar_getBounceNumber(offsets[i]) >= config->bounces) continue;
         
@@ -159,29 +238,31 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
             //      if the object is not reflective, no need for reflection
 
             TraceResult localResult = *result;
+            __constant Material* material = materials + localResult.material;
 
             // Queue reflection ray
             queueTail++;
             offsets[queueTail] = rar_getReflectChild(offsets[i]);
-            // Create ray
-            baseResult[offsets[queueTail]].ray.origin = result->intersect;
-            getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, result->normal);
-
+            // // Create ray
+            baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
+            getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal);
+            
             // Find exit ray
             Ray internal_ray; // This is the ray which will be traced inside the transparent object
-            internal_ray.origin = result->intersect;
-            getRefractDirection(&internal_ray.direction, r.direction, result->normal, AIR_REFRACTIVE_INDEX, result->material.refractiveIndex);
+            internal_ray.origin = localResult.intersect;
+            local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
             TraceResult refract_exit_result;
-            trace_refract_exit(config, world, result, &internal_ray, &refract_exit_result);
+            trace_refract_exit(config, world, vertices, &localResult, &internal_ray, &refract_exit_result);
             // Queue refraction ray
             queueTail++;
             offsets[queueTail] = rar_getRefractChild(offsets[i]);
             if(refract_exit_result.hasIntersect){
+                __constant Material* refractMaterial = materials + refract_exit_result.material;
                 baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
-                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refract_exit_result.material.refractiveIndex, AIR_REFRACTIVE_INDEX);
+                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
             }else{
-                baseResult[offsets[queueTail]].ray.origin = result->intersect;
-                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, result->normal, AIR_REFRACTIVE_INDEX, result->material.refractiveIndex);
+                baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
+                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
             }
         }
     }

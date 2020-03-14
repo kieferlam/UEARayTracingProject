@@ -255,7 +255,7 @@ void setupEventHandlers() {
 }
 
 int main(void) {
-	
+
 	if (!initGL()) {
 		std::cout << "Failed to initialise OpenGL." << std::endl;
 		return -1;
@@ -285,19 +285,32 @@ int main(void) {
 	config.height = WINDOW_HEIGHT;
 	config.bounces = 1;
 
+	int material = world.addMaterial({{ 0.3f, 0.4f, 0.5f }, 0.5f, 0.5f, 1.517f});
+
+	int t1 = world.addVertex({ 0.0f, 0.0f, 40.0f });
+	int t2 = world.addVertex({ 0.0f, 3.0f, 40.0f });
+	int t3 = world.addVertex({ 3.0f, 3.0f, 40.0f });
+
+	int tri = world.addTriangle(t1, t2, t3);
+
+	world.setTriangleMaterial(tri, material);
+
 	world.create();
 	// Add spheres to world
-	int sphere1 = world.addSphere({ -20.0f, 0.0f, 50.0f }, 10.0f, { {0.4f, 0.3f, 0.5f}, 1.0f, 0.4f, 1.517f });
-	world.addSphere({ 20.0f, 0.0f, 50.0f }, 10.0f, { {0.4f, 0.3f, 0.5f}, 1.0f, 0.4f, 1.517f });
+	int sphere1 = world.addSphere({ -20.0f, -5.0f, 50.0f }, 10.0f, material);
+	world.addSphere({ 20.0f, 5.0f, 50.0f }, 10.0f, material);
 	world.update();
 
 	rarkernel.setWorldPtr(&world);
 	rarkernel.setPrimaryConfig(&config);
+	rarkernel.setVertexBuffer(world.getVertexBufferPtr());
+	rarkernel.setMaterialBuffer(world.getMaterialBufferPtr());
 
 	imagekernel.setRayBuffer(rarkernel.getRayBuffer());
 	imagekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
 	imagekernel.setTexture(outputTexture);
 	imagekernel.setRayConfig(rarkernel.getConfigBuffer());
+	imagekernel.setMaterialBuffer(world.getMaterialBufferPtr());
 
 	/*raytracekernel.setPrimaryConfig(&config);
 	raytracekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -341,7 +354,7 @@ int main(void) {
 		// Time
 		std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - starttime;
 
-		world.getSphere(sphere1)->position.x = 30.0f + cos(elapsed_time.count()) * 20.0f;
+		world.getSphere(sphere1)->position.x = 20.0f + cos(elapsed_time.count()) * 20.0f;
 		world.getSphere(sphere1)->position.z = 100.0f + sin(elapsed_time.count()) * 10.0f;
 
 		worldUpdateEvent = world.updateSpheres(sphere1, 1);

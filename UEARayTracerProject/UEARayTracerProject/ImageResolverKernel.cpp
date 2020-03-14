@@ -68,6 +68,9 @@ void ImageResolverKernel::create() {
 
 	err = clSetKernelArg(getKernel(), 4, sizeof(skyboxBuffer), &skyboxBuffer);
 	cl::printErrorMsg("Image Resolver Skybox Kernel Arg", __LINE__, __FILE__, err);
+
+	err = clSetKernelArg(getKernel(), 5, sizeof(*materialBuffer), materialBuffer);
+	cl::printErrorMsg("Image Resolver Material Buffer Arg", __LINE__, __FILE__, err);
 }
 
 cl_event ImageResolverKernel::update() {

@@ -4,7 +4,7 @@
 #include "structs.h"
 #endif
 
-void generateEyeRay(Ray* output, __constant RayConfig* config, int x, int y){
+void generateEyeRay(__global Ray* output, __constant RayConfig* config, int x, int y){
     // Normalised coordinates
     float nx = 2.0f * (((float)(x) / config->width) - 0.5f) * config->aspect;
     float ny = 2.0f * (((float)(y) / config->height) - 0.5f);
@@ -33,11 +33,11 @@ int rar_getBounceNumber(int index){
     return (int)(floor(log2((float)index + 1)));
 }
 
-void getReflectDirection(float3* direction_out, float3 direction_in, float3 normal){
+void getReflectDirection(__global float3* direction_out, float3 direction_in, float3 normal){
     *direction_out = direction_in - 2.0f*dot(direction_in, normal)*normal;
 }
 
-void getRefractDirection(float3* direction_out, float3 direction_in, float3 normal, float from_index, float to_index){
+void getRefractDirection(__global float3* direction_out, float3 direction_in, float3 normal, float from_index, float to_index){
     float n = from_index / to_index;
     float cosI = -dot(normal, direction_in);
     float sinT2 = n * n * (1.0f - cosI*cosI);
@@ -49,7 +49,19 @@ void getRefractDirection(float3* direction_out, float3 direction_in, float3 norm
     *direction_out = n * direction_in + (n * cosI - cosT) * normal;
 }
 
-float triangle_intersect_T(Ray* ray, __constant Triangle* triangle, __constant float3* vertices){
+void local_getRefractDirection(float3* direction_out, float3 direction_in, float3 normal, float from_index, float to_index){
+    float n = from_index / to_index;
+    float cosI = -dot(normal, direction_in);
+    float sinT2 = n * n * (1.0f - cosI*cosI);
+    if(sinT2 > 1.0f){
+        *direction_out = direction_in;
+        return;
+    }
+    float cosT = sqrt(1.0f - sinT2);
+    *direction_out = n * direction_in + (n * cosI - cosT) * normal;
+}
+
+float triangle_intersect_T(Ray* ray, Triangle* triangle, __constant float3* vertices){
     float d = dot(triangle->normal, vertices[triangle->vertices[0]]);
     float t = -(dot(triangle->normal, ray->origin) + d) / dot(triangle->normal, ray->direction);
     return t;

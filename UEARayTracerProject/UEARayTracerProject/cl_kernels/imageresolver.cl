@@ -104,12 +104,12 @@ float3 skybox_cubemap(__constant ImageConfig* config, SKYBOX skybox_data, float3
     return (float3)(r, g, b);
 }
 
-__kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* config, __constant ImageConfig* imageConfig, __constant TraceResult* results, SKYBOX skybox){
+__kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* config, __constant ImageConfig* imageConfig, __constant TraceResult* results, SKYBOX skybox, __constant Material* materials){
     // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
     
-    int baseIndex = (idx + idy * config->width) * config->bounces;
+    int baseIndex = (idx + idy * config->width) * rar_getNumRays(config->bounces);
     __constant TraceResult* baseResult = results + baseIndex;
 
     int numRays = rar_getNumRays(config->bounces);
@@ -145,7 +145,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
             Visit 2: Process Current Node
              */
 
-             RayTraceNode* currentNode = treeStack + stackHead;
+            RayTraceNode* currentNode = treeStack + stackHead;
 
             if(currentNode->visit == 0){
                 int reflectChildIndex = rar_getReflectChild(currentNode->offset);
@@ -176,13 +176,14 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                     }
                 }
             }else{
+                __constant Material* material = materials + currentNode->result->material;
                 if(currentNode->result->hasIntersect){
-                    final = mix(final, currentNode->result->material.diffuse, 0.5f);
+                    final = mix(final, material->diffuse, 1.0f - material->opacity);
                 }else{
                     if(currentNode->type == 1){
-                        final = mix(final, skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction), 0.5f);
+                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * (1.0f - currentNode->parent->cosine);
                     }else if(currentNode->type == 2){
-                        final = mix(final, skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction), 0.2f);
+                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * currentNode->parent->cosine;
                     }
                 }
                 stackHead--;

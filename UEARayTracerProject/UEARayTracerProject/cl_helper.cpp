@@ -263,9 +263,9 @@ namespace cl {
 			<< " -D MAX_SPHERES=" << MAX_SPHERES
 			<< " "
 			<< " -D MAX_TRIANGLES=" << MAX_TRIANGLES
-			<< " "; 
+			<< " -g "; 
 		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
-		if (getConfigBool("allWarnings")) stream << "-w ";
+		if (getConfigBool("disableWarnings")) stream << "-w ";
 		if (getConfigBool("makeWarningsErrors")) stream << "-Werror ";
 		if (getConfigBool("disableOptimisation")) stream << "-cl-opt-disable ";
 		if (getConfigBool("enableMad")) stream << "-cl-mad-enable ";

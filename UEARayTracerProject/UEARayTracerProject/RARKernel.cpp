@@ -24,8 +24,15 @@ void RARKernel::create() {
 	cl::printErrorMsg("Config Buffer", __LINE__, __FILE__, err);
 
 	// Create results 2D array
-
-	outputBuffer = clCreateBuffer(cl::context, CL_MEM_READ_WRITE, sizeof(TraceResult) * config->width * config->height * numrays, NULL, &err);
+	cl_ulong maxMemAllocSize;
+	clGetDeviceInfo(cl::device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &maxMemAllocSize, NULL);
+	size_t outputBufferSize = sizeof(TraceResult) * config->width * config->height * numrays;
+	if (outputBufferSize > maxMemAllocSize) {
+		std::cout << "Warning! Attempting to allocate buffer larger than OpenCL max buffer size." << std::endl;
+		outputBufferSize = maxMemAllocSize;
+	}
+	std::cout << "Max mem alloc size: " << maxMemAllocSize << std::endl;
+	outputBuffer = clCreateBuffer(cl::context, CL_MEM_READ_WRITE, outputBufferSize, NULL, &err);
 	cl::printErrorMsg("Output Buffer", __LINE__, __FILE__, err);
 
 	// Set kernel args
@@ -37,6 +44,12 @@ void RARKernel::create() {
 
 	err = clSetKernelArg(getKernel(), 2, sizeof(outputBuffer), &outputBuffer);
 	cl::printErrorMsg("Output Buffer Kernel Arg", __LINE__, __FILE__, err);
+
+	err = clSetKernelArg(getKernel(), 3, sizeof(*vertexBuffer), vertexBuffer);
+	cl::printErrorMsg("Vertex Buffer Kernel Arg", __LINE__, __FILE__, err);
+
+	err = clSetKernelArg(getKernel(), 4, sizeof(*materialBuffer), materialBuffer);
+	cl::printErrorMsg("Material Buffer Kernel Arg", __LINE__, __FILE__, err);
 }
 
 cl_event RARKernel::update() {

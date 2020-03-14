@@ -17,6 +17,7 @@ class ImageResolverKernel : public CLKernel {
 
 	cl_mem* rayBuffer;
 	cl_mem* rayConfig;
+	cl_mem* materialBuffer;
 
 	ImageConfig config;
 	cl_mem configBuffer;
@@ -37,6 +38,8 @@ public:
 	inline void setRayBuffer(cl_mem* ptr) { rayBuffer = ptr; }
 	inline void setTexture(GLuint t) { texture = t; }
 	inline void setResolution(int w, int h) { config.res.x = w; config.res.y = h; };
+
+	inline void setMaterialBuffer(cl_mem* ptr) { materialBuffer = ptr; }
 
 	inline void setRayConfig(cl_mem* ptr) { rayConfig = ptr; }
 

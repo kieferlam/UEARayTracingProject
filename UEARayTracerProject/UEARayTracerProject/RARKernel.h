@@ -25,14 +25,15 @@ __declspec (align(16)) struct RayConfig {
 };
 
 __declspec (align(16)) struct TraceResult {
-	Material material;
 	Ray ray;
 	cl_float3 intersect;
 	cl_float3 normal;
 	cl_float T;
 	cl_float T2;
 	cl_float cosine;
-	cl_int sphereIndex;
+	cl_int objectType;
+	cl_int objectIndex;
+	cl_int material;
 	cl_int bounce;
 	cl_bool hasIntersect;
 	cl_bool hasTraced;
@@ -48,6 +49,9 @@ class RARKernel : public CLKernel {
 
 	World* world;
 
+	cl_mem* vertexBuffer;
+	cl_mem* materialBuffer;
+
 	cl_event updateEvent, queueEvent;
 
 public:
@@ -60,6 +64,9 @@ public:
 
 	inline cl_mem* getConfigBuffer() { return &configBuffer; }
 	inline cl_mem* getRayBuffer() { return &outputBuffer; }
+
+	inline void setVertexBuffer(cl_mem* ptr) { vertexBuffer = ptr; }
+	inline void setMaterialBuffer(cl_mem* ptr) { materialBuffer = ptr; }
 
 	void read();
 

@@ -4,7 +4,7 @@ typedef struct __attribute__ ((aligned(16))){
     int2 pixelCoord;
 } Ray;
 
-typedef struct {
+typedef struct __attribute__ ((aligned(16))){
 	float aspect;
 	float width;
 	float height;
@@ -21,9 +21,9 @@ typedef struct __attribute__ ((aligned(16))){
 } Material;
 
 typedef struct __attribute__ ((aligned(16))){
-    Material material;
     float3 position;
     float radius;
+    int material;
 } Sphere;
 
 typedef struct __attribute__ ((aligned(16))) {
@@ -40,15 +40,16 @@ typedef struct __attribute__ ((aligned(16))) {
 } World;
 
 typedef struct TraceResult TraceResult;
-struct TraceResult{
-    Material material;
+struct __attribute__ ((aligned(16))) TraceResult{
     Ray ray;
     float3 intersect;
     float3 normal;
     float T;
     float T2;
     float cosine;
-    int sphereIndex;
+    int objectType;
+    int objectIndex;
+    int material;
     int bounce;
     bool hasIntersect;
     bool hasTraced;
