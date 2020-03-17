@@ -48,39 +48,36 @@ bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constan
     // Copy to local/generic memory for faster operations
     Triangle triangle = *const_triangle;
 
-    // Find P
+    float3 edge1 = vertices[triangle.vertices[1]] - vertices[triangle.vertices[0]];
+    float3 edge2 = vertices[triangle.vertices[2]] - vertices[triangle.vertices[0]];
+    float3 h = cross(ray->direction, edge2);
+    float a = dot(edge1, h);
 
-    // Check if ray and triangle are parallel
-    float nDotRayDirection = dot(triangle.normal, ray->direction);
-    if(fabs(nDotRayDirection) < EPSILON){ // They are parallel so they do not intersect
+    if(a > -EPSILON && a < EPSILON){
+        return false; // Ray is parallel to triangle
+    }
+
+    float f = 1.0f / a;
+    float3 s = ray->origin - vertices[triangle.vertices[0]];
+    float u = f * dot(s, h);
+    if(u < 0.0f || u > 1.0f){
         return false;
     }
 
-    // Get T
-    *T = triangle_intersect_T(ray, &triangle, vertices);
-    if(*T < 0) return false; // Triangle is behind ray
+    float3 q = cross(s, edge1);
+    float v = f * dot(ray->direction, q);
+    if(v < 0.0f || u + v > 1.0f){
+        return false;
+    }
 
-    // Compute ray plane intersect
-    *intersect = ray->origin + ray->direction * (*T);
+    // Compute t
+    float t = f * dot(edge2, q);
+    if(t < EPSILON){
+        return false;
+    }
 
-// TODO: Could maybe optimize by storing vertices in private work item memory (generic or private)
-    // Find if the point on the triangle plane is outside the triangle
-    float3 C;
-
-    float3 edge1 = vertices[triangle.vertices[1]] - vertices[triangle.vertices[0]];
-    float3 vp1 = *intersect - vertices[triangle.vertices[0]];
-    C = cross(edge1, vp1);
-    if(dot(triangle.normal, C) < 0) return false; // Intersect point is on the right side of the edge (therefore not in the triangle)
-
-    float3 edge2 = vertices[triangle.vertices[2]] - vertices[triangle.vertices[1]];
-    float3 vp2 = *intersect - vertices[triangle.vertices[1]];
-    C = cross(edge2, vp2);
-    if(dot(triangle.normal, C) < 0) return false;
-
-    float3 edge3 = vertices[triangle.vertices[0]] - vertices[triangle.vertices[2]];
-    float3 vp3 = *intersect - vertices[triangle.vertices[2]];
-    C = cross(edge3, vp3);
-    if(dot(triangle.normal, C) < 0) return false;
+    *T = t;
+    *intersect = ray->origin + ray->direction * t;
 
     return true;
 }
@@ -164,6 +161,7 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
     result->T2 = closest_T2;
     result->intersect = ray->origin + ray->direction * result->T;
     result->objectIndex = closest_i;
+    result->objectType = closest_type;
 
     // Find the normal of the sphere
     if(result->objectType == SPHERE_TYPE){
@@ -189,7 +187,7 @@ void trace_refract_exit(__constant RayConfig* config, __constant World* world, _
         result->T = intersect_result.minT;
         result->T2 = intersect_result.maxT;
         result->intersect = ray->origin + ray->direction * result->T;
-    }else{
+    }else if(entry_result->objectType == TRIANGLE_TYPE){
         result->hasIntersect = triangle_intersect(ray, &world->triangles[entry_result->objectIndex], vertices, &result->intersect, &result->T);
         result->T2 = result->T;
     }
@@ -240,29 +238,33 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
             TraceResult localResult = *result;
             __constant Material* material = materials + localResult.material;
 
-            // Queue reflection ray
-            queueTail++;
-            offsets[queueTail] = rar_getReflectChild(offsets[i]);
-            // // Create ray
-            baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
-            getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal);
-            
-            // Find exit ray
-            Ray internal_ray; // This is the ray which will be traced inside the transparent object
-            internal_ray.origin = localResult.intersect;
-            local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
-            TraceResult refract_exit_result;
-            trace_refract_exit(config, world, vertices, &localResult, &internal_ray, &refract_exit_result);
-            // Queue refraction ray
-            queueTail++;
-            offsets[queueTail] = rar_getRefractChild(offsets[i]);
-            if(refract_exit_result.hasIntersect){
-                __constant Material* refractMaterial = materials + refract_exit_result.material;
-                baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
-                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
-            }else{
+            if(material->reflectivity > EPSILON){
+                // Queue reflection ray
+                queueTail++;
+                offsets[queueTail] = rar_getReflectChild(offsets[i]);
+                // // Create ray
                 baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
-                getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
+                getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal);
+            }
+            
+            if(material->opacity < 1.0f - EPSILON){
+                // Find exit ray
+                Ray internal_ray; // This is the ray which will be traced inside the transparent object
+                internal_ray.origin = localResult.intersect;
+                local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
+                TraceResult refract_exit_result;
+                trace_refract_exit(config, world, vertices, &localResult, &internal_ray, &refract_exit_result);
+                // Queue refraction ray
+                queueTail++;
+                offsets[queueTail] = rar_getRefractChild(offsets[i]);
+                if(refract_exit_result.hasIntersect){
+                    __constant Material* refractMaterial = materials + refract_exit_result.material;
+                    baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
+                }else{
+                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
+                    baseResult[offsets[queueTail]].ray.direction = r.direction;
+                }
             }
         }
     }

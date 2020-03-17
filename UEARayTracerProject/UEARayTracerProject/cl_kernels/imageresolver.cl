@@ -177,13 +177,15 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                 }
             }else{
                 __constant Material* material = materials + currentNode->result->material;
+                __constant Material* parentMaterial = materials + currentNode->parent->material;
+                
                 if(currentNode->result->hasIntersect){
-                    final = mix(final, material->diffuse, 1.0f - material->opacity);
+                    final = mix(final, material->diffuse, material->opacity);
                 }else{
-                    if(currentNode->type == 1){
-                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * (1.0f - currentNode->parent->cosine);
-                    }else if(currentNode->type == 2){
-                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * currentNode->parent->cosine;
+                    if(currentNode->type == REFLECT_TYPE){
+                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * (1.0f - currentNode->parent->cosine) * parentMaterial->reflectivity;
+                    }else if(currentNode->type == REFRACT_TYPE){
+                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * sqrt(currentNode->parent->cosine);
                     }
                 }
                 stackHead--;

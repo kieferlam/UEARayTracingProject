@@ -18,6 +18,11 @@
 #include "CLKernel.h"
 #include "World.h"
 #include "RayTraceKernel.h"
+#include "Model.h"
+
+constexpr float PI = 3.14159265359f;
+constexpr float PI2 = 3.14159265359f * 2;
+constexpr float HPI = 3.14159265359f * 0.5f;
 
 #define WINDOW_WIDTH (1280)
 #define WINDOW_HEIGHT (720)
@@ -45,6 +50,18 @@ GLuint shaderProgram;
 
 GLuint vao;
 GLuint quadVBO;
+
+const float kbdCameraSpeed = 1.0f;
+bool yawRight, yawLeft;
+bool pitchUp, pitchDown;
+
+bool moveRight, moveLeft;
+bool moveForward, moveBackward;
+bool moveUp, moveDown;
+
+const float cameraMoveSpeed = 10.0f;
+const float mouseCameraSensitivity = 0.001f;
+double mousex, mousey, oldmousex, oldmousey;
 
 void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
@@ -250,7 +267,56 @@ void createRenderQuad() {
 
 void setupEventHandlers() {
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-		
+		if (key == GLFW_KEY_ESCAPE) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		switch (key) {
+		case GLFW_KEY_RIGHT:
+			yawRight = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_LEFT:
+			yawLeft = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_UP:
+			pitchUp = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_DOWN:
+			pitchDown = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_W:
+			moveForward = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_S:
+			moveBackward = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_D:
+			moveRight = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_A:
+			moveLeft = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_SPACE:
+			moveUp = action != GLFW_RELEASE ? true : false;
+			break;
+		case GLFW_KEY_LEFT_SHIFT:
+			moveDown = action != GLFW_RELEASE ? true : false;
+			break;
+		}
+	});
+	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	});
+	glfwGetCursorPos(window, &oldmousex, &oldmousey);
+	mousex = oldmousex;
+	mousey = oldmousey;
+	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) {
+		oldmousex = mousex;
+		oldmousey = mousey;
+		mousex = xpos;
+		mousey = ypos;
+
+		if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+			config.yaw += (mousex - oldmousex) * mouseCameraSensitivity;
+			config.pitch += (mousey - oldmousey) * mouseCameraSensitivity;
+		}
 	});
 }
 
@@ -285,15 +351,17 @@ int main(void) {
 	config.height = WINDOW_HEIGHT;
 	config.bounces = 1;
 
-	int material = world.addMaterial({{ 0.3f, 0.4f, 0.5f }, 0.5f, 0.5f, 1.517f});
+	int material = world.addMaterial({ { 0.3f, 0.4f, 0.5f }, 0.5f, 0.5f, 1.25f });
+	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
+	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 1.0f, 0.0f, 1.3f });
 
-	int t1 = world.addVertex({ 0.0f, 0.0f, 40.0f });
-	int t2 = world.addVertex({ 0.0f, 3.0f, 40.0f });
-	int t3 = world.addVertex({ 3.0f, 3.0f, 40.0f });
+	int t1 = world.addVertex({ 0.0f, 0.0f, 10.0f });
+	int t2 = world.addVertex({ 0.0f, 10.0f, 10.0f });
+	int t3 = world.addVertex({ 10.0f, 10.0f, 10.0f });
+	int t4 = world.addVertex({ 10.0f, 0.0f, 10.0f });
 
-	int tri = world.addTriangle(t1, t2, t3);
-
-	world.setTriangleMaterial(tri, material);
+	Model testModel;
+	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
 
 	world.create();
 	// Add spheres to world
@@ -344,7 +412,8 @@ int main(void) {
 	setupEventHandlers();
 
 	// Time
-	auto starttime = std::chrono::system_clock::now();
+	double starttime = glfwGetTime();
+	double lastframetime = starttime;
 
 	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL;
 	cl_int worldUpdateStatus = -1, rarStatus = -1, imageStatus = -1;
@@ -352,12 +421,34 @@ int main(void) {
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 		// Time
-		std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - starttime;
+		double now = glfwGetTime();
+		float deltaTime = now - lastframetime;
+		lastframetime = now;
 
-		world.getSphere(sphere1)->position.x = 20.0f + cos(elapsed_time.count()) * 20.0f;
+		/*world.getSphere(sphere1)->position.x = 20.0f + cos(elapsed_time.count()) * 20.0f;
 		world.getSphere(sphere1)->position.z = 100.0f + sin(elapsed_time.count()) * 10.0f;
 
-		worldUpdateEvent = world.updateSpheres(sphere1, 1);
+		worldUpdateEvent = world.updateSpheres(sphere1, 1);*/
+
+		if (yawRight) config.yaw += deltaTime * kbdCameraSpeed;
+		if (yawLeft) config.yaw -= deltaTime * kbdCameraSpeed;
+		if (pitchUp) config.pitch += deltaTime * kbdCameraSpeed;
+		if (pitchDown) config.pitch -= deltaTime * kbdCameraSpeed;
+		// Normalise
+		if (config.yaw > PI2) config.yaw -= PI2;
+		if (config.yaw < 0.0f) config.yaw += PI2;
+		if (config.pitch > HPI) config.pitch = HPI;
+		if (config.pitch < -HPI) config.pitch = -HPI;
+
+		// Movement
+		if (moveForward) config.camera = { config.camera.x + sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw) * cameraMoveSpeed * deltaTime };
+		if (moveBackward) config.camera = { config.camera.x - sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z - cos(config.yaw) * cameraMoveSpeed * deltaTime };
+		if (moveRight) config.camera = { config.camera.x + sin(config.yaw + HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw + HPI) * cameraMoveSpeed * deltaTime };
+		if (moveLeft) config.camera = { config.camera.x + sin(config.yaw - HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw - HPI) * cameraMoveSpeed * deltaTime };
+		if (moveUp) config.camera.y += cameraMoveSpeed * deltaTime;
+		if (moveDown) config.camera.y -= cameraMoveSpeed * deltaTime;
+
+		rarkernel.update();
 
 		rarEvent = rarkernel.queue(0, NULL);
 		imageEvent = imagekernel.queue(1, &rarEvent);

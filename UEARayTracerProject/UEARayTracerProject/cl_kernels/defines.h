@@ -10,5 +10,8 @@
 #define SPHERE_TYPE (0)
 #define TRIANGLE_TYPE (1)
 
+#define REFLECT_TYPE (1)
+#define REFRACT_TYPE (2)
+
 // types
 typedef __constant unsigned char* SKYBOX;

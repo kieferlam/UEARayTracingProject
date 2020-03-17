@@ -12,8 +12,8 @@
 __declspec (align(16)) struct WorldStruct {
 	Sphere spheres[MAX_SPHERES];
 	Triangle triangles[MAX_TRIANGLES];
-	int numSpheres;
-	int numTriangles;
+	cl_uint numSpheres;
+	cl_uint numTriangles;
 };
 
 class World {
@@ -44,23 +44,25 @@ public:
 
 	inline std::vector<Material>& getMaterialBuffer() { return materials; }
 
-	int addSphere(cl_float3 position, cl_float radius, int material);
+	unsigned int addSphere(cl_float3 position, cl_float radius, unsigned int material);
 
-	Sphere* getSphere(int index);
+	Sphere* getSphere(unsigned int index);
 
-	int addTriangle(int i0, int i1, int i2);
+	unsigned int addTriangle(unsigned int i0, unsigned int i1, unsigned int i2);
 
-	Triangle* getTriangle(int index);
+	unsigned int addTriangle(cl_uint3 face, cl_float3 normal);
 
-	int addVertex(cl_float3 vertex);
+	Triangle* getTriangle(unsigned int index);
 
-	int addMaterial(Material m);
+	unsigned int addVertex(cl_float3 vertex);
 
-	void setTriangleMaterial(int triangle, int material);
+	unsigned int addMaterial(Material m);
+
+	void setTriangleMaterial(unsigned int triangle, unsigned int material);
 
 	cl_event update();
 
-	cl_event updateSpheres(int sphereStartIndex, int numSpheres);
+	cl_event updateSpheres(unsigned int sphereStartIndex, unsigned int numSpheres);
 
 };
 

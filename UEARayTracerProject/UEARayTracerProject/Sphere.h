@@ -5,5 +5,5 @@
 __declspec (align(16)) struct Sphere {
 	cl_float3 position;
 	cl_float radius;
-	int material;
+	cl_uchar material;
 };

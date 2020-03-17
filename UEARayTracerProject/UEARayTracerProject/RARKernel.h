@@ -12,7 +12,7 @@
 __declspec (align(16)) struct Ray{
 	cl_float3 origin;
 	cl_float3 direction;
-	cl_int2 pixelCoord;
+	cl_uint2 pixelCoord;
 } ;
 
 __declspec (align(16)) struct RayConfig {
@@ -21,7 +21,9 @@ __declspec (align(16)) struct RayConfig {
 	cl_float height;
 	cl_float screenDistance;
 	cl_float3 camera;
-	cl_int bounces;
+	cl_float pitch;
+	cl_float yaw;
+	cl_uchar bounces;
 };
 
 __declspec (align(16)) struct TraceResult {
@@ -31,10 +33,10 @@ __declspec (align(16)) struct TraceResult {
 	cl_float T;
 	cl_float T2;
 	cl_float cosine;
-	cl_int objectType;
-	cl_int objectIndex;
-	cl_int material;
-	cl_int bounce;
+	cl_uchar objectType;
+	cl_uchar objectIndex;
+	cl_uchar material;
+	cl_uchar bounce;
 	cl_bool hasIntersect;
 	cl_bool hasTraced;
 };

@@ -16,14 +16,14 @@ void World::create() {
 	cl::printErrorMsg("Create Material Buffer", __LINE__, __FILE__, err);
 }
 
-int World::addSphere(cl_float3 position, cl_float radius, int material) {
+unsigned int World::addSphere(cl_float3 position, cl_float radius, unsigned int material) {
 	world.spheres[world.numSpheres].position = position;
 	world.spheres[world.numSpheres].radius = radius;
 	world.spheres[world.numSpheres++].material = material;
 	return world.numSpheres - 1;
 }
 
-Sphere* World::getSphere(int index) {
+Sphere* World::getSphere(unsigned int index) {
 	return world.spheres + index;
 }
 
@@ -40,13 +40,17 @@ cl_float3 _world_cross(cl_float3 a, cl_float3 b) {
 	return { a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x };
 }
 
+cl_float3 operator-(const cl_float3& v) {
+	return { -v.x, -v.y, -v.z };
+}
+
 cl_float3 _world_computeTriangleNormal(cl_float3 v0, cl_float3 v1, cl_float3 v2) {
 	cl_float3 v0v1 = { v1.x - v0.x, v1.y - v0.y, v1.z - v0.z };
 	cl_float3 v0v2 = { v2.x - v0.x, v2.y - v0.y, v2.z - v0.z };
 	return _world_normalise(_world_cross(v0v1, v0v2));
 }
 
-int World::addTriangle(int i0, int i1, int i2)
+unsigned int World::addTriangle(unsigned int i0, unsigned int i1, unsigned int i2)
 {
 	// Get vertices
 	cl_float3 v0 = vertices[i0];
@@ -57,24 +61,30 @@ int World::addTriangle(int i0, int i1, int i2)
 	return world.numTriangles-1;
 }
 
-Triangle* World::getTriangle(int index)
+unsigned int World::addTriangle(cl_uint3 face, cl_float3 normal)
+{
+	world.triangles[world.numTriangles++] = { normal, face };
+	return world.numTriangles-1;
+}
+
+Triangle* World::getTriangle(unsigned int index)
 {
 	return world.triangles + index;
 }
 
-int World::addVertex(cl_float3 vertex)
+unsigned int World::addVertex(cl_float3 vertex)
 {
 	vertices.push_back(vertex);
 	return vertices.size()-1;
 }
 
-int World::addMaterial(Material m)
+unsigned int World::addMaterial(Material m)
 {
 	materials.push_back(m);
 	return materials.size() - 1;
 }
 
-void World::setTriangleMaterial(int triangle, int material)
+void World::setTriangleMaterial(unsigned int triangle, unsigned int material)
 {
 	world.triangles[triangle].materialIndex = material;
 }
@@ -85,7 +95,7 @@ cl_event World::update() {
 	return writeEvent;
 }
 
-cl_event World::updateSpheres(int sphereStartIndex, int numSpheres) {
+cl_event World::updateSpheres(unsigned int sphereStartIndex, unsigned int numSpheres) {
 	cl_int err = clEnqueueWriteBuffer(cl::queue, worldBuffer, false, offsetof(struct WorldStruct, spheres) + sizeof(Sphere) * sphereStartIndex, sizeof(Sphere) * numSpheres, &world.spheres + sphereStartIndex, 0, NULL, &writeEvent);
 	cl::printErrorMsg("Update Spheres [" + std::to_string(sphereStartIndex) + ", " + std::to_string(numSpheres) + "]", __LINE__, __FILE__, err);
 	return writeEvent;

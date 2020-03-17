@@ -8,8 +8,12 @@ void generateEyeRay(__global Ray* output, __constant RayConfig* config, int x, i
     // Normalised coordinates
     float nx = 2.0f * (((float)(x) / config->width) - 0.5f) * config->aspect;
     float ny = 2.0f * (((float)(y) / config->height) - 0.5f);
+    float nz = config->screenDistance;
 
-    output->origin = (float3)(nx, ny, config->screenDistance);
+    float3 coord = {nx, ny * cos(config->pitch) + nz * -sin(config->pitch), nz * cos(config->pitch) + ny * sin(config->pitch)};
+    coord = (float3)(coord.x * cos(config->yaw) + coord.z * sin(config->yaw), coord.y, coord.z * cos(config->yaw) + coord.x * -sin(config->yaw));
+
+    output->origin = coord + config->camera;
     output->direction = normalize(output->origin - config->camera);
 }
 
@@ -63,6 +67,6 @@ void local_getRefractDirection(float3* direction_out, float3 direction_in, float
 
 float triangle_intersect_T(Ray* ray, Triangle* triangle, __constant float3* vertices){
     float d = dot(triangle->normal, vertices[triangle->vertices[0]]);
-    float t = -(dot(triangle->normal, ray->origin) + d) / dot(triangle->normal, ray->direction);
+    float t = (dot(triangle->normal, ray->origin) + d) / dot(triangle->normal, ray->direction);
     return t;
 }
