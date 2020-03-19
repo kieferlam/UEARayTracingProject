@@ -5,99 +5,6 @@
 #include "func.h"
 #endif
 
-/**
-    INTERSECT FUNCTIONS
- */
-
-float3 sphere_normal(__constant Sphere* sphere, float3 surface){
-    return normalize(surface - sphere->position);
-}
-
-bool sphere_intersect(Ray* ray, __constant Sphere* sphere, SphereIntersect* result){
-    float3 vec_raysphere = ray->origin - sphere->position; // This line should be omitted in the future for performance optimizations
-
-    // at^2 + bt + c = 0
-    float a = 1.0f; // dot(ray->direction, ray->direction) Since ray direction is normalized, this is just 1.0
-    float b = dot(ray->direction * vec_raysphere, (float3)(2.0f, 2.0f, 2.0f));
-    float c = dot(SQ(vec_raysphere), (float3)(1.0f, 1.0f, 1.0f)) - SQ(sphere->radius);
-
-    // t = (-b +- sqrt(b^2 - 4ac)) / 2a;
-    float discriminant = SQ(b) - 4*a*c;
-    if(discriminant < 0) return false;
-
-    result->minT = (-b - sqrt(SQ(b) - 4.0f*a*c)) / 2.0f;
-    result->maxT = (-b + sqrt(SQ(b) - 4.0f*a*c)) / 2.0f;
-    if(result->minT > result->maxT){
-        float temp = result->minT;
-        result->minT = result->maxT;
-        result->maxT = temp;
-    }
-
-    // Epsilon (Make sure ray from a sphere doesn't intersect itself)
-    if(result->minT < EPSILON){
-        result->minT = result->maxT;
-    }
-
-    // If intersect is behind origin, it doesn't intersect;
-    if(result->maxT < EPSILON) return false;
-
-    return true;
-}
-
-bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constant float3* vertices, float3* intersect, float* T){
-    // Copy to local/generic memory for faster operations
-    Triangle triangle = *const_triangle;
-
-    float3 edge1 = vertices[triangle.vertices[1]] - vertices[triangle.vertices[0]];
-    float3 edge2 = vertices[triangle.vertices[2]] - vertices[triangle.vertices[0]];
-    float3 h = cross(ray->direction, edge2);
-    float a = dot(edge1, h);
-
-    if(a > -EPSILON && a < EPSILON){
-        return false; // Ray is parallel to triangle
-    }
-
-    float f = 1.0f / a;
-    float3 s = ray->origin - vertices[triangle.vertices[0]];
-    float u = f * dot(s, h);
-    if(u < 0.0f || u > 1.0f){
-        return false;
-    }
-
-    float3 q = cross(s, edge1);
-    float v = f * dot(ray->direction, q);
-    if(v < 0.0f || u + v > 1.0f){
-        return false;
-    }
-
-    // Compute t
-    float t = f * dot(edge2, q);
-    if(t < EPSILON){
-        return false;
-    }
-
-    *T = t;
-    *intersect = ray->origin + ray->direction * t;
-
-    return true;
-}
-
-/**
-    RAY TRACE
- */
-
-float3 reflect(float3 in, float3 normal){
-    return in - 2.0f * dot(in, normal) * normal;
-}
-
-float3 refract(float3 incident, float3 normal, float n1, float n2){
-    float n = n1 / n2;
-    float cosI = -dot(normal, incident);
-    float sinT2 = SQ(n) * (1.0f - SQ(cosI));
-    if(sinT2 > 1.0f) return incident; // Total internal reflection
-    float cosT = sqrt(1.0 - sinT2);
-    return n * incident + (n * cosI - cosT) * normal;
-}
 
 /**
 This function just calculates the intersections of a ray and the scene/world.
@@ -171,7 +78,7 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
         result->normal = world->triangles[closest_i].normal;
         result->material = world->triangles[result->objectIndex].materialIndex;
     }
-    result->cosine = SQ(dot(ray->direction, result->normal));
+    result->cosine = fabs(dot(ray->direction, result->normal));
 
 }
 
@@ -203,7 +110,7 @@ void trace_refract_exit(__constant RayConfig* config, __constant World* world, _
         result->material = world->triangles[result->objectIndex].materialIndex;
     }
 
-    result->cosine = SQ(dot(ray->direction, result->normal));
+    result->cosine = dot(ray->direction, result->normal);
 }
 
 __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __global TraceResult* results, __constant float3* vertices, __constant Material* materials){
@@ -231,9 +138,6 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
         
         // If intersect, add more rays
         if(result->hasIntersect){
-            // TODO: Add checks if it even needs to create more rays
-            // E.g. if the object is solid, no need for refract
-            //      if the object is not reflective, no need for reflection
 
             TraceResult localResult = *result;
             __constant Material* material = materials + localResult.material;
@@ -262,7 +166,7 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
                     baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
                     getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
                 }else{
-                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
+                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect + internal_ray.direction * REFRACT_SURFACE_THICKNESS; // Slightly refract the ray on infinitely small thickness
                     baseResult[offsets[queueTail]].ray.direction = r.direction;
                 }
             }

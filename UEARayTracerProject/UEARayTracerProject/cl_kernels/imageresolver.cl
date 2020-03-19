@@ -126,6 +126,8 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
             localResults[i] = baseResult[i];
         }
 
+        float3 rarmix = {0.0f, 0.0f, 0.0f};
+
         // Stack for ray bounce processing
         RayTraceNode treeStack[64];
         int stackHead = 0;
@@ -158,7 +160,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                         reflectNode->parent = currentNode->result;
                         reflectNode->offset = reflectChildIndex;
                         reflectNode->visit = 0;
-                        reflectNode->type = 1;
+                        reflectNode->type = REFLECT_TYPE;
                     }
                 }
             }else if(currentNode->visit == 1){
@@ -172,20 +174,22 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                         refractNode->parent = currentNode->result;
                         refractNode->offset = refractChildIndex;
                         refractNode->visit = 0;
-                        refractNode->type = 2;
+                        refractNode->type = REFRACT_TYPE;
                     }
                 }
             }else{
                 __constant Material* material = materials + currentNode->result->material;
                 __constant Material* parentMaterial = materials + currentNode->parent->material;
-                
+
                 if(currentNode->result->hasIntersect){
-                    final = mix(final, material->diffuse, material->opacity);
+                    final = mix(rarmix, material->diffuse, min(parentMaterial->opacity, 1.0f - parentMaterial->reflectivity));
                 }else{
+                    float3 reflectSky = skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction);
+                    float kr = fresnel(currentNode->parent->ray.direction, currentNode->parent->normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
                     if(currentNode->type == REFLECT_TYPE){
-                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * (1.0f - currentNode->parent->cosine) * parentMaterial->reflectivity;
+                        rarmix += reflectSky * kr * parentMaterial->reflectivity;
                     }else if(currentNode->type == REFRACT_TYPE){
-                        final += skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction) * sqrt(currentNode->parent->cosine);
+                        rarmix += reflectSky * (1.0f - kr);
                     }
                 }
                 stackHead--;

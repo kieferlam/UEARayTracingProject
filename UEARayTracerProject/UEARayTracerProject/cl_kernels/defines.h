@@ -4,6 +4,7 @@
 #define EPSILON (0.001f)
 
 #define AIR_REFRACTIVE_INDEX (1.0003f)
+#define REFRACT_SURFACE_THICKNESS (0.5f)
 
 #define MAX_VALUE (0xFFFFFFFF)
 

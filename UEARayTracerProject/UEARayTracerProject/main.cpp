@@ -18,6 +18,7 @@
 #include "CLKernel.h"
 #include "World.h"
 #include "RayTraceKernel.h"
+#include "ResetKernel.h"
 #include "Model.h"
 
 constexpr float PI = 3.14159265359f;
@@ -38,8 +39,9 @@ GLFWwindow* window;
 RARKernel rarkernel;
 ImageResolverKernel imagekernel;
 RayTraceKernel raytracekernel;
+ResetKernel resetkernel;
 CLKernel* kernels[] = {
-	&rarkernel, &imagekernel
+	&rarkernel, &imagekernel, &resetkernel
 };
 
 World world;
@@ -117,7 +119,8 @@ bool buildCL() {
 	const std::vector<std::string> sources = {
 		 //"cl_kernels/raytrace.cl",
 		 "cl_kernels/rarkernel.cl",
-		 "cl_kernels/imageresolver.cl"
+		 "cl_kernels/imageresolver.cl",
+		 "cl_kernels/resetkernel.cl"
 	};
 
 	for (auto it = sources.begin(); it != sources.end(); ++it) {
@@ -320,6 +323,26 @@ void setupEventHandlers() {
 	});
 }
 
+void updateCameraMovement(float deltaTime) {
+	if (yawRight) config.yaw += deltaTime * kbdCameraSpeed;
+	if (yawLeft) config.yaw -= deltaTime * kbdCameraSpeed;
+	if (pitchUp) config.pitch += deltaTime * kbdCameraSpeed;
+	if (pitchDown) config.pitch -= deltaTime * kbdCameraSpeed;
+	// Normalise
+	if (config.yaw > PI2) config.yaw -= PI2;
+	if (config.yaw < 0.0f) config.yaw += PI2;
+	if (config.pitch > HPI) config.pitch = HPI;
+	if (config.pitch < -HPI) config.pitch = -HPI;
+
+	// Movement
+	if (moveForward) config.camera = { config.camera.x + sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw) * cameraMoveSpeed * deltaTime };
+	if (moveBackward) config.camera = { config.camera.x - sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z - cos(config.yaw) * cameraMoveSpeed * deltaTime };
+	if (moveRight) config.camera = { config.camera.x + sin(config.yaw + HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw + HPI) * cameraMoveSpeed * deltaTime };
+	if (moveLeft) config.camera = { config.camera.x + sin(config.yaw - HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw - HPI) * cameraMoveSpeed * deltaTime };
+	if (moveUp) config.camera.y += cameraMoveSpeed * deltaTime;
+	if (moveDown) config.camera.y -= cameraMoveSpeed * deltaTime;
+}
+
 int main(void) {
 
 	if (!initGL()) {
@@ -351,9 +374,9 @@ int main(void) {
 	config.height = WINDOW_HEIGHT;
 	config.bounces = 1;
 
-	int material = world.addMaterial({ { 0.3f, 0.4f, 0.5f }, 0.5f, 0.5f, 1.25f });
+	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 1.0f, 1.04f });
 	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
-	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 1.0f, 0.0f, 1.3f });
+	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 0.0f, 1.3f });
 
 	int t1 = world.addVertex({ 0.0f, 0.0f, 10.0f });
 	int t2 = world.addVertex({ 0.0f, 10.0f, 10.0f });
@@ -379,6 +402,10 @@ int main(void) {
 	imagekernel.setTexture(outputTexture);
 	imagekernel.setRayConfig(rarkernel.getConfigBuffer());
 	imagekernel.setMaterialBuffer(world.getMaterialBufferPtr());
+
+	resetkernel.setConfig(&config);
+	resetkernel.setConfigBuffer(rarkernel.getConfigBuffer());
+	resetkernel.setRayBuffer(rarkernel.getRayBuffer());
 
 	/*raytracekernel.setPrimaryConfig(&config);
 	raytracekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -415,7 +442,7 @@ int main(void) {
 	double starttime = glfwGetTime();
 	double lastframetime = starttime;
 
-	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL;
+	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL, resetEvent = NULL;
 	cl_int worldUpdateStatus = -1, rarStatus = -1, imageStatus = -1;
 
 	// Main loop
@@ -430,27 +457,12 @@ int main(void) {
 
 		worldUpdateEvent = world.updateSpheres(sphere1, 1);*/
 
-		if (yawRight) config.yaw += deltaTime * kbdCameraSpeed;
-		if (yawLeft) config.yaw -= deltaTime * kbdCameraSpeed;
-		if (pitchUp) config.pitch += deltaTime * kbdCameraSpeed;
-		if (pitchDown) config.pitch -= deltaTime * kbdCameraSpeed;
-		// Normalise
-		if (config.yaw > PI2) config.yaw -= PI2;
-		if (config.yaw < 0.0f) config.yaw += PI2;
-		if (config.pitch > HPI) config.pitch = HPI;
-		if (config.pitch < -HPI) config.pitch = -HPI;
-
-		// Movement
-		if (moveForward) config.camera = { config.camera.x + sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw) * cameraMoveSpeed * deltaTime };
-		if (moveBackward) config.camera = { config.camera.x - sin(config.yaw) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z - cos(config.yaw) * cameraMoveSpeed * deltaTime };
-		if (moveRight) config.camera = { config.camera.x + sin(config.yaw + HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw + HPI) * cameraMoveSpeed * deltaTime };
-		if (moveLeft) config.camera = { config.camera.x + sin(config.yaw - HPI) * cameraMoveSpeed * deltaTime, config.camera.y, config.camera.z + cos(config.yaw - HPI) * cameraMoveSpeed * deltaTime };
-		if (moveUp) config.camera.y += cameraMoveSpeed * deltaTime;
-		if (moveDown) config.camera.y -= cameraMoveSpeed * deltaTime;
+		updateCameraMovement(deltaTime);
 
 		rarkernel.update();
 
-		rarEvent = rarkernel.queue(0, NULL);
+		resetEvent = resetkernel.queue(0, NULL);
+		rarEvent = rarkernel.queue(1, &resetEvent);
 		imageEvent = imagekernel.queue(1, &rarEvent);
 		clFinish(cl::queue);
 

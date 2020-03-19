@@ -146,6 +146,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="RARKernel.cpp" />
     <ClCompile Include="RayTraceKernel.cpp" />
+    <ClCompile Include="ResetKernel.cpp" />
     <ClCompile Include="TracerKernel.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -159,6 +160,7 @@
     <ClInclude Include="OBJ_Loader.h" />
     <ClInclude Include="RARKernel.h" />
     <ClInclude Include="RayTraceKernel.h" />
+    <ClInclude Include="ResetKernel.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="TracerKernel.h" />
     <ClInclude Include="Triangle.h" />
