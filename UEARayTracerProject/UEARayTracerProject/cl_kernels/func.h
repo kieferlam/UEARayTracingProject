@@ -71,6 +71,9 @@ void local_getRefractDirection(float3* direction_out, float3 direction_in, float
     *direction_out = n * direction_in + (n * cosI - cosT) * normal;
 }
 
+float project(float3 planeNormal, float3 point){
+    return dot(planeNormal, point);
+}
 
 /**
     INTERSECT FUNCTIONS
@@ -146,6 +149,23 @@ bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constan
     *T = t;
     *intersect = ray->origin + ray->direction * t;
 
+    return true;
+}
+
+bool bvh_plane_intersect(__constant Model* model, float* planeDotOrigin, float* planeDotDirection, float* tNear, float* tFar, uint* planeIndex){
+    for(int plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
+        float3 planeNormal = BVH_PlaneNormals[plane_i];
+
+        float tNearPlane = (model->bounds[plane_i].x - planeDotOrigin[plane_i]) / planeDotDirection[plane_i];
+        float tFarPlane = (model->bounds[plane_i].y - planeDotOrigin[plane_i]) / planeDotDirection[plane_i];
+        if(planeDotDirection[plane_i] < 0.0f){
+            swap(&tNearPlane, &tFarPlane);
+        }
+
+        if(tNearPlane > *tNear) *tNear = tNearPlane, planeIndex = plane_i;
+        if(tFarPlane < *tFar) *tFar = tFarPlane;
+        if(*tNear > *tFar) return false;
+    }
     return true;
 }
 

@@ -5,15 +5,27 @@
 #include "Sphere.h"
 #include "Material.h"
 #include "Triangle.h"
+#include "Model.h"
 
 #define MAX_SPHERES (8)
 #define MAX_TRIANGLES (65536)
+#define MAX_MODELS (32)
+
+class Model;
+
+__declspec (align(16)) struct ModelStruct {
+	cl_float2 bounds[7];
+	cl_uint triangleOffset;
+	cl_uint numTriangles;
+};
 
 __declspec (align(16)) struct WorldStruct {
 	Sphere spheres[MAX_SPHERES];
 	Triangle triangles[MAX_TRIANGLES];
+	ModelStruct models[MAX_MODELS];
 	cl_uint numSpheres;
 	cl_uint numTriangles;
+	cl_uint numModels;
 };
 
 class World {
@@ -43,6 +55,10 @@ public:
 	inline std::vector<cl_float3>& getVertexBuffer() { return vertices; }
 
 	inline std::vector<Material>& getMaterialBuffer() { return materials; }
+
+	inline cl_uint getTriangleCount() { return world.numTriangles; }
+
+	ModelStruct* addModel(ModelStruct modelStruct);
 
 	unsigned int addSphere(cl_float3 position, cl_float radius, unsigned int material);
 

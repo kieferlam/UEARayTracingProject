@@ -16,6 +16,12 @@ void World::create() {
 	cl::printErrorMsg("Create Material Buffer", __LINE__, __FILE__, err);
 }
 
+ModelStruct* World::addModel(ModelStruct modelStruct)
+{
+	world.models[world.numModels++] = modelStruct;
+	return world.models + (world.numModels - 1);
+}
+
 unsigned int World::addSphere(cl_float3 position, cl_float radius, unsigned int material) {
 	world.spheres[world.numSpheres].position = position;
 	world.spheres[world.numSpheres].radius = radius;

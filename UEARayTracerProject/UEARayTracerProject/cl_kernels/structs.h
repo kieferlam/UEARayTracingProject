@@ -1,3 +1,15 @@
+
+#define SQRT33 (0.57735026919f)
+__constant float3 BVH_PlaneNormals[] = {
+	{1.0f, 0.0f, 0.0f},
+	{0.0f, 1.0f, 0.0f},
+	{0.0f, 0.0f, 1.0f},
+	{SQRT33, SQRT33, SQRT33},
+	{-SQRT33, SQRT33, SQRT33},
+	{-SQRT33, -SQRT33, SQRT33},
+	{SQRT33, -SQRT33, SQRT33},
+};
+
 typedef struct __attribute__ ((aligned(16))){
     float3 origin;
     float3 direction;
@@ -34,11 +46,19 @@ typedef struct __attribute__ ((aligned(16))) {
 	uchar materialIndex;
 } Triangle;
 
+typedef struct __attribute__ ((aligned(16))){
+    float2 bounds[7];
+    uint triangleOffset;
+    uint numTriangles;
+} Model;
+
 typedef struct __attribute__ ((aligned(16))) {
 	Sphere spheres[MAX_SPHERES];
 	Triangle triangles[MAX_TRIANGLES];
+    Model models[MAX_MODELS];
 	uint numSpheres;
     uint numTriangles;
+    uint numModels;
 } World;
 
 typedef struct TraceResult TraceResult;

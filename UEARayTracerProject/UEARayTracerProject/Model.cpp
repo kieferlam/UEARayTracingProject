@@ -1,5 +1,7 @@
 #include "Model.h"
 #include "OBJ_Loader.h"
+#include <algorithm>
+#include <limits>
 
 Model::Model()
 {
@@ -24,10 +26,21 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 		std::cout << "Could not load OBJ." << std::endl;
 	}
 
+	ModelStruct mStruct;
+
+	// Reset bounds
+	for (int i = 0; i < sizeof(mStruct.bounds) / sizeof(mStruct.bounds[0]); ++i) {
+		mStruct.bounds[i].x = std::numeric_limits<float>::max();
+		mStruct.bounds[i].y = std::numeric_limits<float>::min();
+	}
+
+	mStruct.triangleOffset = world->getTriangleCount();
+
 	// Create Mesh objects
 	for (auto mesh_it = loader.LoadedMeshes.begin(); mesh_it != loader.LoadedMeshes.end(); ++mesh_it) {
-		Mesh m;
-		m.name = mesh_it->MeshName;
+		meshes.push_back(Mesh());
+		Mesh* m = &meshes[0];
+		m->name = mesh_it->MeshName;
 
 		/**
 			Add vertices to world. The indices for the mesh need to be offset by the vertices already in the world object.
@@ -43,10 +56,22 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			// The object contains normals for each vertex so the normal of a point on the face can be interpolated
 			//cl_float3 normal = { mesh_it->Vertices[i].Normal.X, mesh_it->Vertices[i].Normal.Y, mesh_it->Vertices[i].Normal.Z };
 			int triangle = world->addTriangle(face.x, face.y, face.z);
-			m.addTriangle(triangle);
+			m->addTriangle(triangle);
 
-			world->setTriangleMaterial(triangle, 2);
+			world->setTriangleMaterial(triangle, 0);
+		}
+
+		m->createBoundingVolume(world->getTriangle(0), world->getVertexBuffer());
+
+		// Find min max bounds
+		for (int i = 0; i < sizeof(mStruct.bounds) / sizeof(mStruct.bounds[0]); ++i) {
+			mStruct.bounds[i].x = std::min(mStruct.bounds[i].x, m->getBounds(i).x);
+			mStruct.bounds[i].y = std::max(mStruct.bounds[i].y, m->getBounds(i).y);
 		}
 	}
+
+	mStruct.numTriangles = world->getTriangleCount() - mStruct.triangleOffset;
+
+	modelStruct = world->addModel(mStruct);
 
 }

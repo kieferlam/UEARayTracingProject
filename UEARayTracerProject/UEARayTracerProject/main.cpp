@@ -374,7 +374,7 @@ int main(void) {
 	config.height = WINDOW_HEIGHT;
 	config.bounces = 1;
 
-	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 1.0f, 1.04f });
+	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
 	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
 	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 0.0f, 1.3f });
 

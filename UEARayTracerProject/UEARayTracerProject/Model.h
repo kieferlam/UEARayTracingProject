@@ -1,4 +1,7 @@
 #pragma once
+
+#define NOMINMAX
+
 #include <CL/opencl.h>
 #include <vector>
 #include <fstream>
@@ -7,10 +10,16 @@
 #include "World.h"
 #include "Mesh.h"
 
+class World;
+class Mesh;
+struct ModelStruct;
+
 class Model
 {
 
 	std::vector<Mesh> meshes;
+
+	ModelStruct * modelStruct;
 
 public:
 	Model();

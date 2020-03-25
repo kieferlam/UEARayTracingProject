@@ -14,5 +14,7 @@
 #define REFLECT_TYPE (1)
 #define REFRACT_TYPE (2)
 
+#define BVH_PLANE_COUNT (7)
+
 // types
 typedef __constant unsigned char* SKYBOX;

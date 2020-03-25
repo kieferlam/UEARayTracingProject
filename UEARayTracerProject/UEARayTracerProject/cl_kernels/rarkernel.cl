@@ -39,23 +39,58 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
         }
     }
 
-    // Triangle intersections
-    int closest_triangle = -1;
-    for(int i = 0; i < world->numTriangles; ++i){
-        __constant Triangle* triangle = world->triangles + i;
+    float planeDotRayOrigin[BVH_PLANE_COUNT];
+    float planeDotRayDirection[BVH_PLANE_COUNT];
+    // pre-compute ray with plane dot products
+    for(int plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
+        planeDotRayOrigin[plane_i] = dot(ray->origin, BVH_PlaneNormals[plane_i]);
+        planeDotRayDirection[plane_i] = dot(ray->direction, BVH_PlaneNormals[plane_i]);
+    }
 
-        float3 intersect;
-        float T;
+    // Model intersections
+    char closest_model = -1;
+    float closest_model_T = MAX_VALUE;
+    char closest_plane = -1;
+    for(int i = 0; i < world->numModels; ++i){
+        __constant Model* model = world->models + i;
 
-        if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
-
-        if(T < closest_T){
-            closest_T = T;
-            closest_T2 = T;
-            closest_i = i;
-            closest_type = TRIANGLE_TYPE;
+        float tnear = -MAX_VALUE;
+        float tfar = MAX_VALUE;
+        uint planeIndex = -1;
+        
+        if(bvh_plane_intersect(model, planeDotRayOrigin, planeDotRayDirection, &tnear, &tfar, &planeIndex)){
+            if(tnear < closest_model_T){
+                closest_model_T = tnear;
+                closest_model = i;
+                closest_plane = planeIndex;
+            }
         }
     }
+
+    if(closest_model != -1){
+        closest_T = closest_model_T;
+        closest_T2 = closest_model_T;
+        closest_i = 0;
+        closest_type = SPHERE_TYPE;
+    }
+
+    // int closest_triangle = -1;
+    // // Triangle intersections
+    // for(int i = 0; i < world->numTriangles; ++i){
+    //     __constant Triangle* triangle = world->triangles + i;
+
+    //     float3 intersect;
+    //     float T;
+
+    //     if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+    //     if(T < closest_T){
+    //         closest_T = T;
+    //         closest_T2 = T;
+    //         closest_i = i;
+    //         closest_type = TRIANGLE_TYPE;
+    //     }
+    // }
 
     // If no intersect, stop
     if(closest_i < 0){
