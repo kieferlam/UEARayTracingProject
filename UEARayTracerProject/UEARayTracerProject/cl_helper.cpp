@@ -263,6 +263,8 @@ namespace cl {
 			<< " -D MAX_SPHERES=" << MAX_SPHERES
 			<< " -D MAX_TRIANGLES=" << MAX_TRIANGLES
 			<< " -D MAX_MODELS=" << MAX_MODELS
+			<< " -D GRID_CELL_ROW_COUNT=" << GRID_CELL_ROW_COUNT
+			<< " -D GRID_MAX_TRIANGLES_PER_CELL=" << GRID_MAX_TRIANGLES_PER_CELL
 			<< " -g "; 
 		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
 		if (getConfigBool("disableWarnings")) stream << "-w ";

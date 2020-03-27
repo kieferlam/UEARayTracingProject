@@ -378,11 +378,6 @@ int main(void) {
 	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
 	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 0.0f, 1.3f });
 
-	int t1 = world.addVertex({ 0.0f, 0.0f, 10.0f });
-	int t2 = world.addVertex({ 0.0f, 10.0f, 10.0f });
-	int t3 = world.addVertex({ 10.0f, 10.0f, 10.0f });
-	int t4 = world.addVertex({ 10.0f, 0.0f, 10.0f });
-
 	Model testModel;
 	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
 

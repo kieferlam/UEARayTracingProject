@@ -61,36 +61,33 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
         if(bvh_plane_intersect(model, planeDotRayOrigin, planeDotRayDirection, &tnear, &tfar, &planeIndex)){
             if(tnear < closest_model_T){
                 closest_model_T = tnear;
-                closest_model = i;
                 closest_plane = planeIndex;
+                closest_model = i;
             }
         }
     }
 
-    if(closest_model != -1){
-        closest_T = closest_model_T;
-        closest_T2 = closest_model_T;
-        closest_i = 0;
-        closest_type = SPHERE_TYPE;
+    // If model intersect
+    if(closest_model > -1){
+        int closest_triangle = -1;
+        Model model = world->models[closest_model];
+        // Triangle intersections
+        for(int i = model.triangleOffset; i < model.triangleOffset + model.numTriangles; ++i){
+            __constant Triangle* triangle = world->triangles + i;
+
+            float3 intersect;
+            float T;
+
+            if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+            if(T < closest_T){
+                closest_T = T;
+                closest_T2 = T;
+                closest_i = i;
+                closest_type = TRIANGLE_TYPE;
+            }
+        }
     }
-
-    // int closest_triangle = -1;
-    // // Triangle intersections
-    // for(int i = 0; i < world->numTriangles; ++i){
-    //     __constant Triangle* triangle = world->triangles + i;
-
-    //     float3 intersect;
-    //     float T;
-
-    //     if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
-
-    //     if(T < closest_T){
-    //         closest_T = T;
-    //         closest_T2 = T;
-    //         closest_i = i;
-    //         closest_type = TRIANGLE_TYPE;
-    //     }
-    // }
 
     // If no intersect, stop
     if(closest_i < 0){
@@ -202,7 +199,7 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
                     getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
                 }else{
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect + internal_ray.direction * REFRACT_SURFACE_THICKNESS; // Slightly refract the ray on infinitely small thickness
-                    baseResult[offsets[queueTail]].ray.direction = r.direction;
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
                 }
             }
         }

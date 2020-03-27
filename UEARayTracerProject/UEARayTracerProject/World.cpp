@@ -33,29 +33,6 @@ Sphere* World::getSphere(unsigned int index) {
 	return world.spheres + index;
 }
 
-cl_float _world_computeLength(cl_float3 vector) {
-	return sqrtf(vector.x*vector.x + vector.y*vector.y + vector.z*vector.z);
-}
-
-cl_float3 _world_normalise(cl_float3 vector) {
-	cl_float length = _world_computeLength(vector);
-	return { vector.x / length, vector.y / length, vector.z / length };
-}
-
-cl_float3 _world_cross(cl_float3 a, cl_float3 b) {
-	return { a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x };
-}
-
-cl_float3 operator-(const cl_float3& v) {
-	return { -v.x, -v.y, -v.z };
-}
-
-cl_float3 _world_computeTriangleNormal(cl_float3 v0, cl_float3 v1, cl_float3 v2) {
-	cl_float3 v0v1 = { v1.x - v0.x, v1.y - v0.y, v1.z - v0.z };
-	cl_float3 v0v2 = { v2.x - v0.x, v2.y - v0.y, v2.z - v0.z };
-	return _world_normalise(_world_cross(v0v1, v0v2));
-}
-
 unsigned int World::addTriangle(unsigned int i0, unsigned int i1, unsigned int i2)
 {
 	// Get vertices

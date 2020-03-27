@@ -68,6 +68,15 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			mStruct.bounds[i].x = std::min(mStruct.bounds[i].x, m->getBounds(i).x);
 			mStruct.bounds[i].y = std::max(mStruct.bounds[i].y, m->getBounds(i).y);
 		}
+
+		for (int x = 0; x < GRID_CELL_ROW_COUNT; ++x) {
+			for (int y = 0; y < GRID_CELL_ROW_COUNT; ++y) {
+				for (int z = 0; z < GRID_CELL_ROW_COUNT; ++z) {
+					int coord = x * SQ(GRID_CELL_ROW_COUNT) + y * GRID_CELL_ROW_COUNT + z;
+					m->getTrianglesInGridCell(mStruct.bounds, coord, mStruct.triangleGrid + coord, mStruct.cellTriangleCount + coord);
+				}
+			}
+		}
 	}
 
 	mStruct.numTriangles = world->getTriangleCount() - mStruct.triangleOffset;

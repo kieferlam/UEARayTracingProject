@@ -182,15 +182,14 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                 __constant Material* parentMaterial = materials + currentNode->parent->material;
 
                 if(currentNode->result->hasIntersect){
-                    final = mix(rarmix, material->diffuse, min(parentMaterial->opacity, 1.0f - parentMaterial->reflectivity));
-                    rarmix = (float3)(0.0f, 0.0f, 0.0f);
+                    final = mix(final, material->diffuse, min(parentMaterial->opacity, 1.0f - parentMaterial->reflectivity));
                 }else{
                     float3 reflectSky = skybox_cubemap(imageConfig, skybox, currentNode->result->ray.direction);
                     float kr = fresnel(currentNode->parent->ray.direction, currentNode->parent->normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
                     if(currentNode->type == REFLECT_TYPE){
-                        rarmix += reflectSky * kr * parentMaterial->reflectivity;
+                        final += reflectSky * kr * parentMaterial->reflectivity;
                     }else if(currentNode->type == REFRACT_TYPE){
-                        rarmix += reflectSky * (1.0f - kr);
+                        final += reflectSky * (1.0f - kr);
                     }
                 }
                 stackHead--;

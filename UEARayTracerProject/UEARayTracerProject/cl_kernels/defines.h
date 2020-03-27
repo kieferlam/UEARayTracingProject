@@ -1,10 +1,11 @@
 #define PI (3.14159265359f)
 #define SQ(x) ((x)*(x))
+#define CUBE(x) ((x)*(x)*(x))
 
 #define EPSILON (0.001f)
 
-#define AIR_REFRACTIVE_INDEX (1.0003f)
-#define REFRACT_SURFACE_THICKNESS (0.5f)
+#define AIR_REFRACTIVE_INDEX (1.005f)
+#define REFRACT_SURFACE_THICKNESS (1.0f)
 
 #define MAX_VALUE (0xFFFFFFFF)
 

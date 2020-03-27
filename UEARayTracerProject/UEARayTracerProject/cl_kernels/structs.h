@@ -47,6 +47,8 @@ typedef struct __attribute__ ((aligned(16))) {
 } Triangle;
 
 typedef struct __attribute__ ((aligned(16))){
+	uint triangleGrid[CUBE(GRID_CELL_ROW_COUNT) * GRID_MAX_TRIANGLES_PER_CELL]; // Stores index of triangles in each grid cell
+	uchar cellTriangleCount[CUBE(GRID_CELL_ROW_COUNT)]; // Stores the count of triangles in each grid cell
     float2 bounds[7];
     uint triangleOffset;
     uint numTriangles;
