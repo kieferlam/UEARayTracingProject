@@ -4,6 +4,10 @@
 #include "structs.h"
 #endif
 
+bool debug_isCenterPixel(){
+    return get_global_id(0) == 1280 / 2 && get_global_id(1) == 720 / 2;
+}
+
 void swap(float* a, float* b){
     float temp = *a;
     *a = *b;
@@ -71,8 +75,33 @@ void local_getRefractDirection(float3* direction_out, float3 direction_in, float
     *direction_out = n * direction_in + (n * cosI - cosT) * normal;
 }
 
-float project(float3 planeNormal, float3 point){
+float project(const float3 planeNormal, const float3 point){
     return dot(planeNormal, point);
+}
+
+float3 dda_getStep(const float3 cellSize, const float3 direction){
+    return fabs(cellSize / direction);
+}
+
+float3 dda_getInitialT(const float3 cellSize, const Ray* ray){
+    return (cellSize - ray->origin) / ray->direction;
+}
+
+int3 dda_getCellOrigin(const float3 rayOrigin, const float3 gridmin, const float3 cellSize){
+    float3 cellO = (rayOrigin - gridmin) / cellSize;
+    return (int3)(
+        (int) cellO.x,
+        (int) cellO.y,
+        (int) cellO.z
+    );
+}
+
+float3 dda_getCellStepPolarity(const float3 direction){
+    return (float3)(direction.x < 0 ? -1.0f : 1.0f, direction.y < 0 ? -1.0f : 1.0f, direction.z < 0 ? -1.0f : 1.0f);
+}
+
+uint getTriangleGridOffset(int3 cellindex){
+    return cellindex.x * CUBE(GRID_CELL_ROW_COUNT) + cellindex.y * SQ(GRID_CELL_ROW_COUNT) + cellindex.z;
 }
 
 /**
@@ -152,8 +181,82 @@ bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constan
     return true;
 }
 
+void model_intersect(__constant World* world, __constant float3* vertices, const Ray* ray, uchar modelIndex, float* closest_T, int* closest_I){
+    __constant Model* model = world->models + modelIndex;
+
+    // Step through model grid
+    float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
+    float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
+    float3 cellSize = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
+
+    union{
+        float array[4];
+        float3 vector;
+    } dtCell;
+    dtCell.vector = dda_getStep(cellSize, ray->direction);
+    union{
+        int array[3];
+        int3 vector;
+    } cellindex;
+    cellindex.vector = dda_getCellOrigin(ray->origin, gridmin, cellSize);
+
+    float3 cellT = {
+        ((cellindex.vector.x + 1) * cellSize.x - gridmin.x) / ray->direction.x,
+        ((cellindex.vector.y + 1) * cellSize.y - gridmin.y) / ray->direction.y,
+        ((cellindex.vector.z + 1) * cellSize.z - gridmin.z) / ray->direction.z,
+    };
+
+    union{
+        float array[4];
+        float3 vector;
+    } stepPolarity;
+    stepPolarity.vector = dda_getCellStepPolarity(ray->direction);
+    float cumT[3] = {0.0f, 0.0f, 0.0f};
+
+    while(
+        cellindex.vector.x >= 0 && cellindex.vector.x < GRID_CELL_ROW_COUNT &&
+        cellindex.vector.y >= 0 && cellindex.vector.y < GRID_CELL_ROW_COUNT &&
+        cellindex.vector.z >= 0 && cellindex.vector.z < GRID_CELL_ROW_COUNT
+    ){
+        // Intersect test with cell's triangles
+        // Triangle intersections
+        bool intersect = false;
+        uint celloffset = getTriangleGridOffset(cellindex.vector);
+        if(get_global_id(0))
+        for(int i = 0; i < model->cellTriangleCount[celloffset]; ++i){
+            __constant Triangle* triangle = world->triangles + (model->triangleGrid[celloffset + i]);
+
+            float3 intersect;
+            float T;
+
+            if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+            if(T < *closest_T){
+                *closest_T = T;
+                *closest_I = i;
+                intersect = true;
+            }
+        }
+        if(intersect) return;
+
+        // Find lowest T value so we know which dimension to increment
+        int lowCumI = 0;
+        float lowCumT = cumT[0];
+        for(int i = 1; i < 3; ++i){
+            if(cumT[i] < lowCumT){
+                lowCumT = cumT[i];
+                lowCumI = i;
+            }
+        }
+
+        cumT[lowCumI] += dtCell.array[lowCumI];
+
+        cellindex.array[lowCumI] += stepPolarity.array[lowCumI] * 1.0f;
+    }
+}
+
 bool bvh_plane_intersect(__constant Model* model, float* planeDotOrigin, float* planeDotDirection, float* tNear, float* tFar, uint* planeIndex){
-    for(int plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
+    for(uint plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
         float3 planeNormal = BVH_PlaneNormals[plane_i];
 
         float tNearPlane = (model->bounds[plane_i].x - planeDotOrigin[plane_i]) / planeDotDirection[plane_i];
@@ -162,7 +265,7 @@ bool bvh_plane_intersect(__constant Model* model, float* planeDotOrigin, float* 
             swap(&tNearPlane, &tFarPlane);
         }
 
-        if(tNearPlane > *tNear) *tNear = tNearPlane, planeIndex = plane_i;
+        if(tNearPlane > *tNear) *tNear = tNearPlane, *planeIndex = plane_i;
         if(tFarPlane < *tFar) *tFar = tFarPlane;
         if(*tNear > *tFar) return false;
     }

@@ -61,6 +61,8 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			world->setTriangleMaterial(triangle, 0);
 		}
 
+		std::cout << "Mesh " << m->name << " with " << m->getTriangleCount() << " triangles." << std::endl;
+
 		m->createBoundingVolume(world->getTriangle(0), world->getVertexBuffer());
 
 		// Find min max bounds
@@ -69,11 +71,28 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			mStruct.bounds[i].y = std::max(mStruct.bounds[i].y, m->getBounds(i).y);
 		}
 
+		// Compute the size of the grid bounds
+		cl_float boundsSize[3] = { mStruct.bounds[0].y - mStruct.bounds[0].x, mStruct.bounds[1].y - mStruct.bounds[1].x, mStruct.bounds[2].y - mStruct.bounds[2].x };
+		cl_float cellSize[3];
+		for (int i = 0; i < 3; ++i) cellSize[i] = boundsSize[i] / GRID_CELL_ROW_COUNT; // Calculate width, height, and length/depth of the grid cells
+
+		std::cout << "Constructing triangle grid for mesh " << m->name << std::endl;
+
 		for (int x = 0; x < GRID_CELL_ROW_COUNT; ++x) {
+			int xoffset = x * SQ(GRID_CELL_ROW_COUNT);
+			cl_float xmin = x * cellSize[0];
+			cl_float xmax = (x + 1) * cellSize[0];
+			std::cout << "Grid cell x: " << x << "\n";
 			for (int y = 0; y < GRID_CELL_ROW_COUNT; ++y) {
+				int yoffset = y * GRID_CELL_ROW_COUNT;
+				cl_float ymin = y * cellSize[1];
+				cl_float ymax = (y + 1) * cellSize[1];
 				for (int z = 0; z < GRID_CELL_ROW_COUNT; ++z) {
-					int coord = x * SQ(GRID_CELL_ROW_COUNT) + y * GRID_CELL_ROW_COUNT + z;
-					m->getTrianglesInGridCell(mStruct.bounds, coord, mStruct.triangleGrid + coord, mStruct.cellTriangleCount + coord);
+					int coord = xoffset + yoffset + z;
+					cl_float2 cellbounds[3] = { {xmin, xmax}, {ymin, ymax}, {z * cellSize[2], (z + 1) * cellSize[2]} };
+					// Reset triangle count
+					mStruct.cellTriangleCount[coord] = 0;
+					m->getTrianglesInGridCell(world, cellbounds, mStruct.triangleGrid + coord, mStruct.cellTriangleCount + coord);
 				}
 			}
 		}

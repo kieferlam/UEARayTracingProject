@@ -11,7 +11,7 @@
 #define MAX_TRIANGLES (65536)
 #define MAX_MODELS (32)
 
-#define GRID_CELL_ROW_COUNT (16)
+#define GRID_CELL_ROW_COUNT (32)
 #define GRID_MAX_TRIANGLES_PER_CELL (8)
 
 #define SQ(x) ((x)*(x)) 

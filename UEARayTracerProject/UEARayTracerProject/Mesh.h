@@ -47,7 +47,9 @@ public:
 
 	inline cl_float2 getBounds(int index) { return bounds[index]; }
 
-	void getTrianglesInGridCell(cl_float2* bounds, int cellIndex, cl_uint* cellTriangles, cl_uchar* triangleCount);
+	inline size_t getTriangleCount() { return triangles.size(); }
+
+	void getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cellTriangles, cl_uchar* triangleCount);
 
 };
 

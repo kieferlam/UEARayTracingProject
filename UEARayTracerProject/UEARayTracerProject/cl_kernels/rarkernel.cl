@@ -10,7 +10,7 @@
 This function just calculates the intersections of a ray and the scene/world.
 Image processing and ray-combination should happen elsewhere.
 */
-void trace(__constant RayConfig* input, __constant World* world, __constant float3* vertices, Ray* ray, __global TraceResult* result){
+void trace(__constant RayConfig* input, __constant World* world, __constant float3* vertices, const Ray* ray, __global TraceResult* result){
     result->hasTraced = true;
     // Sphere intersection
     float closest_T = MAX_VALUE;
@@ -67,26 +67,11 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
         }
     }
 
-    // If model intersect
+    // If model bounding volume intersect
     if(closest_model > -1){
-        int closest_triangle = -1;
-        Model model = world->models[closest_model];
-        // Triangle intersections
-        for(int i = model.triangleOffset; i < model.triangleOffset + model.numTriangles; ++i){
-            __constant Triangle* triangle = world->triangles + i;
-
-            float3 intersect;
-            float T;
-
-            if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
-
-            if(T < closest_T){
-                closest_T = T;
-                closest_T2 = T;
-                closest_i = i;
-                closest_type = TRIANGLE_TYPE;
-            }
-        }
+        model_intersect(world, vertices, ray, closest_model, &closest_T, &closest_i);
+        closest_T2 = closest_T;
+        closest_type = TRIANGLE_TYPE;
     }
 
     // If no intersect, stop
@@ -184,22 +169,27 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
             }
             
             if(material->opacity < 1.0f - EPSILON){
-                // Find exit ray
-                Ray internal_ray; // This is the ray which will be traced inside the transparent object
-                internal_ray.origin = localResult.intersect;
-                local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
-                TraceResult refract_exit_result;
-                trace_refract_exit(config, world, vertices, &localResult, &internal_ray, &refract_exit_result);
-                // Queue refraction ray
-                queueTail++;
-                offsets[queueTail] = rar_getRefractChild(offsets[i]);
-                if(refract_exit_result.hasIntersect){
-                    __constant Material* refractMaterial = materials + refract_exit_result.material;
-                    baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
-                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
+                if(result->objectType == SPHERE_TYPE){ // Only trace exit ray if not triangle
+                    // Find exit ray
+                    Ray internal_ray; // This is the ray which will be traced inside the transparent object
+                    internal_ray.origin = localResult.intersect;
+                    local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
+                    TraceResult refract_exit_result;
+                    trace_refract_exit(config, world, vertices, &localResult, &internal_ray, &refract_exit_result);
+                    // Queue refraction ray
+                    queueTail++;
+                    offsets[queueTail] = rar_getRefractChild(offsets[i]);
+                    if(refract_exit_result.hasIntersect){
+                        __constant Material* refractMaterial = materials + refract_exit_result.material;
+                        baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
+                        getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
+                    }else{
+                        baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
+                        getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
+                    }
                 }else{
-                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect + internal_ray.direction * REFRACT_SURFACE_THICKNESS; // Slightly refract the ray on infinitely small thickness
-                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
+                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
                 }
             }
         }
