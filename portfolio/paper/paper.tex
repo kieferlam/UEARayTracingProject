@@ -1,0 +1,194 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Change the option between square brackets
+% depending on the document you have to write:
+%
+% proposal    for the initial proposal
+% review      for the literature review
+% progress    for the progress report
+% final       for the final 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[final]{cmpreport}
+\makeatletter
+\input{t1pcr.fd}
+\makeatother
+\setlength{\footnotesep}{3ex}
+
+% Some package I am using. You may not need them
+%
+\usepackage{rotating}
+\usepackage{subfloat}
+\usepackage{color}
+\usepackage{amsmath}
+
+%\setkeys{Gin}{draft}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Fill in the fields with:
+%
+%  your project title
+%  your name
+%  your registration number
+%  your supervisor's name
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Real-time Ray Tracing}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The author's name is ignored if the following command 
+% is not present in the document
+%
+% Before submitting a PDF of your final report to the 
+% project database you may comment out the command
+% if you are worried about lack of anonimity.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\author{Kiefer Lam}
+
+\registration{100166387}
+\supervisor{Dr Stephen Laycock}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Fill in the field with your module code.
+% this should be:
+%
+% for BIS            -> CMP-6012Y
+% for BUSINESS STATS -> CMP-6028Y
+% for other students -> CMP-6013Y
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ccode{CMP-6013Y}
+%\ccode{CMP-6012Y / CMP-6013Y / CMP-6028Y}
+
+
+\summary{
+This document explains how to use the class file \texttt{cmpreport.cls} to write your reports.
+The class file has been designed to simplify your life; many things are done for you. As a consequence
+some commands presented here are specific to the class file whether they are new commands or customized versions
+of commonly known \LaTeX\ commands.
+}
+
+\acknowledgements{
+This section is used to acknowledge whoever's support and contribution.
+The command that introduces it is ignored in the project proposal, literature review and progress report. It is used in the
+final report,  but  is not compulsory. If you do not
+have an acknowledgements command in your preamble then there
+won't be any acknowledgement section in the document produced. \emph{Abstract} and \emph{Acknowledgements} sections should fit on the same page. 
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% If you do not want a list of figures and a list of tables
+% to appear after the table of content then uncomment this line 
+%
+% Note that the class file contains code to avoid
+% producing an empty list section (e.g list of figures) if the 
+% list is empty (i.e. no figure in document).
+%
+% The command also prevents inserting a list of figures or tables 
+% anywhere else in the document
+%
+% Some supervisors think that a report should not contain these
+% lists. Please ask your supervisor's opinion.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\nolist
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Comment out if you want your list of figures and list of
+% tables on two or more pages, in particular if the lists do not fit 
+% on a single page.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\onePageLists
+
+\begin{document}
+
+\section{Introduction}
+
+\subsection{Aims and Motivations}
+
+\subsection{Problems}
+
+\section{Literature Review}
+
+\section{Design and Implementation}
+
+\subsection{OpenCL and OpenGL}
+% Write about OpenCL and OpenGL design and implementation architecture here.
+% Include interop. Include OpenCL CLang, OpenCL buffers (cl_mem), OpenGL images and buffers, GLSL.
+% Include OpenCL Queue and Event architecture
+\subsubsection{Host}
+% Write about the things that happen on the host side (e.g. creating memory buffers for data, images, etc)
+% Main loop, queue and waiting for queue, displaying the results, data transfer
+
+\subsubsection{Device}
+% Write about OpenCL kernels, memory management (e.g. memory types: global, constant, private, local),
+% Include limitations of OpenCL CLang, CLang datatypes and unique features
+
+\subsection{Kernel Structure}
+% Write about the kernels that are used and why there are multiple kernels.
+% Include file structure and header files usage, order of kernels and kernel dependencies
+% Include why monolithic kernels may be bad
+
+\subsubsection{Ray Trace Kernel}
+% Write that the rays are generated here and traced (intersection test with world objects)
+% Include that results are saved to a global buffer which will be used in other kernels
+
+\subsubsection{Image Kernel}
+% Write that the image is generated in this kernel. The OpenGL image buffer is written to.
+% Include that the data is from the ray trace kernel.
+
+\subsubsection{Reset Kernel}
+% Write that the results generated in the ray trace kernel are reset here
+
+\subsubsection{Single Independent Kernel}
+% Write that due to memory limitations from the results buffer in the ray trace kernel that a single kernel may be necessary
+% Include physical memory limit vs cl_mem buffer allocation limit
+
+\subsection{Ray Generation}
+% Mention only basic rays will be included in this section
+
+\subsubsection{Primary Rays}
+% Talk about eye rays, method of generation. Explain there's a ray for each pixel. Include diagram and pseudocode
+% Explain camera movement here (rotation and translation). Include normalisation (pixel coord for ray position and direction)
+
+\subsubsection{Reflection}
+% Write about generating reflection rays using the normal of primary ray result. Use pseudocode and diagram.
+% Mention secondary rays and recursion
+
+\subsubsection{Refraction}
+% Same as reflection
+
+\subsection{Intersection With Objects}
+% Write that for an image to be produced, the ray needs to hit an object and return a value
+% So explain why we need intersection
+
+\subsubsection{Sphere Intersection}
+% Use pseudocode and diagram and sphere struct
+% Include which secondary rays are generated as a result
+
+\subsubsection{Triangle Intersection}
+% Write about versatility of triangles and how models use them (the reason we use triangles)
+% Include that it is relatively slow for complex models with lots of triangles
+% Include that there are methods to get around performance issues
+% Include diagrams and pseudocode
+
+\subsection{Generating An Image}
+% Write how you need to mix light from the different rays to generate the final colour
+% Using material information (mention material properties like opacity, reflectivity, diffuse)
+
+\subsubsection{Phong Model}
+% Write about base colour from only primary ray
+
+\section{Results and Testing}
+
+\section{Future Work}
+
+\section{Conclusion}
+
+\end{document}

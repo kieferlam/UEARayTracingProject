@@ -1,0 +1,25 @@
+\contentsline {section}{\numberline {1}Introduction}{5}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Aims and Motivations}{5}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Problems}{5}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Literature Review}{5}{section.2}%
+\contentsline {section}{\numberline {3}Design and Implementation}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}OpenCL and OpenGL}{5}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Host}{5}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Device}{5}{subsubsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.2}Kernel Structure}{5}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Ray Trace Kernel}{5}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Image Kernel}{5}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Reset Kernel}{5}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}Single Independent Kernel}{5}{subsubsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.3}Ray Generation}{5}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Primary Rays}{5}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Reflection}{5}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}Refraction}{5}{subsubsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.4}Intersection With Objects}{5}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}Sphere Intersection}{5}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}Triangle Intersection}{5}{subsubsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.5}Generating An Image}{5}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}Phong Model}{5}{subsubsection.3.5.1}%
+\contentsline {section}{\numberline {4}Results and Testing}{5}{section.4}%
+\contentsline {section}{\numberline {5}Future Work}{5}{section.5}%
+\contentsline {section}{\numberline {6}Conclusion}{5}{section.6}%
