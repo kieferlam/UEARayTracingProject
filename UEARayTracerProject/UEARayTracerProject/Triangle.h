@@ -5,5 +5,5 @@
 __declspec (align(16)) struct Triangle {
 	cl_float3 normal;
 	cl_uint3 face;
-	cl_uchar materialIndex;
+	cl_uint materialIndex;
 };

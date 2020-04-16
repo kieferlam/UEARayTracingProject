@@ -1,6 +1,7 @@
 #include "cl_helper.h"
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include "TracerKernel.h"
 #include "RARKernel.h"
 
@@ -92,6 +93,8 @@ namespace cl {
 
 	cl_program program;
 	cl_command_queue queue;
+
+	device_info_struct device_info;
 
 	std::unordered_map<std::string, std::string> config;
 
@@ -236,6 +239,37 @@ namespace cl {
 		} else {
 			context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
 		}
+
+		// Device info
+		clGetDeviceInfo(cl::device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(device_info.local_mem_size), &device_info.local_mem_size, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(device_info.max_compute_units), &device_info.max_compute_units, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_CONSTANT_ARGS, sizeof(device_info.max_constant), &device_info.max_constant, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(device_info.max_constant_buffer), &device_info.max_constant_buffer, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(device_info.max_image2d_height), &device_info.max_image2d_height, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(device_info.max_image2d_width), &device_info.max_image2d_width, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(device_info.max_mem_alloc), &device_info.max_mem_alloc, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(device_info.max_parameters), &device_info.max_parameters, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(device_info.max_work_group_size), &device_info.max_work_group_size, NULL);
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(device_info.max_work_dimensions), &device_info.max_work_dimensions, NULL);
+		device_info.max_work_item_sizes = new size_t[device_info.max_work_dimensions];
+		clGetDeviceInfo(cl::device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * device_info.max_work_dimensions, device_info.max_work_item_sizes, NULL);
+
+		std::cout << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_COMPUTE_UNITS: " << std::setw(8) << device_info.max_compute_units << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_WORK_GROUP_SIZE: " << std::setw(8) << device_info.max_work_group_size << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << std::setw(8) << device_info.max_work_dimensions << std::endl;
+
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_WORK_ITEM_SIZES: " << std::setw(8);
+		for (int i = 0; i < device_info.max_work_dimensions; ++i) std::cout << device_info.max_work_item_sizes[i] << ",";
+		std::cout << std::endl;
+
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_CONSTANT_ARGS: " << std::setw(8) << device_info.max_constant << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_LOCAL_MEM_SIZE: " << std::setw(8) << device_info.local_mem_size << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE: " << std::setw(8) << device_info.max_constant_buffer << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " << std::setw(8) << device_info.max_mem_alloc << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_MAX_PARAMETER_SIZE: " << std::setw(8) << device_info.max_parameters << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_IMAGE2D_MAX_WIDTH: " << std::setw(8) << device_info.max_image2d_width << std::endl;
+		std::cout << std::setw(48) << "CL_DEVICE_IMAGE2D_MAX_HEIGHT: " << std::setw(8) << device_info.max_image2d_height << std::endl;
 
 		if (err == NULL) return true;
 

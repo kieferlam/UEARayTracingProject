@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CLKernel.cpp" />
     <ClCompile Include="cl_helper.cpp" />
     <ClCompile Include="ImageResolverKernel.cpp" />
     <ClCompile Include="main.cpp" />
@@ -155,6 +156,7 @@
     <ClCompile Include="RARKernel.cpp" />
     <ClCompile Include="RayTraceKernel.cpp" />
     <ClCompile Include="ResetKernel.cpp" />
+    <ClCompile Include="TestKernel.cpp" />
     <ClCompile Include="TracerKernel.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -170,6 +172,7 @@
     <ClInclude Include="RayTraceKernel.h" />
     <ClInclude Include="ResetKernel.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="TestKernel.h" />
     <ClInclude Include="TracerKernel.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="World.h" />

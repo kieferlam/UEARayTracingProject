@@ -2,7 +2,7 @@
 #define SQ(x) ((x)*(x))
 #define CUBE(x) ((x)*(x)*(x))
 
-#define EPSILON (0.001f)
+#define EPSILON (0.005f)
 
 #define AIR_REFRACTIVE_INDEX (1.005f)
 #define REFRACT_SURFACE_THICKNESS (1.0f)
@@ -19,3 +19,7 @@
 
 // types
 typedef __constant unsigned char* SKYBOX;
+
+typedef __constant unsigned int* TRIANGLE_GRID;
+
+typedef __constant unsigned int* TRIANGLE_GRID_COUNT;

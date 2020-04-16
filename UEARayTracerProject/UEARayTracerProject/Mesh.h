@@ -24,14 +24,22 @@ const cl_float3 BVH_PlaneNormals[] = {
 };
 
 class World;
-class Model;
+
+struct OctreeCell {
+	std::vector<unsigned int> triangles;
+	OctreeCell* children[8];
+	cl_float2 bounds[3];
+	unsigned int depth;
+};
 
 class Mesh
 {
 
-	std::vector<unsigned int> triangles;
-
 	cl_float2 bounds[7];
+
+	OctreeCell octree;
+
+	std::vector<OctreeCell*> leafCells;
 
 public:
 	Mesh();
@@ -39,7 +47,7 @@ public:
 
 	std::string name;
 	
-	inline void addTriangle(unsigned int triangle) { triangles.push_back(triangle); }
+	inline void addTriangle(unsigned int triangle) { octree.triangles.push_back(triangle); }
 
 	void createBoundingVolume(const Triangle * triangles, const std::vector<cl_float3>& vertices);
 
@@ -47,9 +55,13 @@ public:
 
 	inline cl_float2 getBounds(int index) { return bounds[index]; }
 
-	inline size_t getTriangleCount() { return triangles.size(); }
+	inline size_t getTriangleCount() { return octree.triangles.size(); }
 
 	void getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cellTriangles, cl_uchar* triangleCount);
+
+	void constructOctree(World* world, int depth, const cl_float2* bounds);
+
+	inline const std::vector<OctreeCell*>& getLeafNodes() { return leafCells; }
 
 };
 

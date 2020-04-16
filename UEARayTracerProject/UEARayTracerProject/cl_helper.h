@@ -15,6 +15,18 @@
 #define BUILD_OPTIONS ("-cl-std=CL2.1")
 
 namespace cl {
+	struct device_info_struct {
+		size_t max_parameters;
+		cl_ulong max_mem_alloc;
+		cl_uint max_constant;
+		cl_uint max_compute_units;
+		size_t max_image2d_width, max_image2d_height;
+		cl_ulong local_mem_size;
+		cl_ulong max_constant_buffer;
+		cl_uint max_work_dimensions;
+		size_t max_work_group_size;
+		size_t* max_work_item_sizes;
+	};
 
 	extern cl_platform_id platform;
 	extern cl_device_id device;
@@ -25,6 +37,8 @@ namespace cl {
 	extern cl_command_queue queue;
 
 	extern std::unordered_map<std::string, std::string> config;
+
+	extern device_info_struct device_info;
 
 	void printErrorMsg(std::string msg, int line, const char* filename, cl_int err);
 	std::string getErrorString(cl_int errorCode);

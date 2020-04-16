@@ -2,6 +2,7 @@
 #include "OBJ_Loader.h"
 #include <algorithm>
 #include <limits>
+#include <iomanip>
 
 Model::Model()
 {
@@ -58,18 +59,23 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			int triangle = world->addTriangle(face.x, face.y, face.z);
 			m->addTriangle(triangle);
 
-			world->setTriangleMaterial(triangle, 0);
+			world->setTriangleMaterial(triangle, 2);
 		}
 
 		std::cout << "Mesh " << m->name << " with " << m->getTriangleCount() << " triangles." << std::endl;
 
+		// Create bounds for the mesh
 		m->createBoundingVolume(world->getTriangle(0), world->getVertexBuffer());
 
-		// Find min max bounds
+		// Find min max bounds of the entire model
 		for (int i = 0; i < sizeof(mStruct.bounds) / sizeof(mStruct.bounds[0]); ++i) {
 			mStruct.bounds[i].x = std::min(mStruct.bounds[i].x, m->getBounds(i).x);
 			mStruct.bounds[i].y = std::max(mStruct.bounds[i].y, m->getBounds(i).y);
 		}
+	}
+
+	for (auto mesh_it = meshes.begin(); mesh_it != meshes.end(); ++mesh_it) {
+		Mesh* m = &(*mesh_it);
 
 		// Compute the size of the grid bounds
 		cl_float boundsSize[3] = { mStruct.bounds[0].y - mStruct.bounds[0].x, mStruct.bounds[1].y - mStruct.bounds[1].x, mStruct.bounds[2].y - mStruct.bounds[2].x };
@@ -78,23 +84,25 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 
 		std::cout << "Constructing triangle grid for mesh " << m->name << std::endl;
 
-		for (int x = 0; x < GRID_CELL_ROW_COUNT; ++x) {
-			int xoffset = x * SQ(GRID_CELL_ROW_COUNT);
-			cl_float xmin = x * cellSize[0];
-			cl_float xmax = (x + 1) * cellSize[0];
-			std::cout << "Grid cell x: " << x << "\n";
-			for (int y = 0; y < GRID_CELL_ROW_COUNT; ++y) {
-				int yoffset = y * GRID_CELL_ROW_COUNT;
-				cl_float ymin = y * cellSize[1];
-				cl_float ymax = (y + 1) * cellSize[1];
-				for (int z = 0; z < GRID_CELL_ROW_COUNT; ++z) {
-					int coord = xoffset + yoffset + z;
-					cl_float2 cellbounds[3] = { {xmin, xmax}, {ymin, ymax}, {z * cellSize[2], (z + 1) * cellSize[2]} };
-					// Reset triangle count
-					mStruct.cellTriangleCount[coord] = 0;
-					m->getTrianglesInGridCell(world, cellbounds, mStruct.triangleGrid + coord, mStruct.cellTriangleCount + coord);
-				}
+		world->addTriangleGrid(&mStruct.triangleGridOffset, &mStruct.triangleCountOffset);
+
+		std::cout << "Constructing octree for mesh " << m->name << std::endl;
+		m->constructOctree(world, GRID_CELL_DEPTH, mStruct.bounds);
+
+		std::cout << "Adding octree leaf nodes to mesh grid" << std::endl;
+		// Get leaf nodes and put into grid
+		for (auto leaf = m->getLeafNodes().begin(); leaf != m->getLeafNodes().end(); ++leaf) {
+			const OctreeCell* cell = *leaf;
+			cl_float3 boundsOffset = { cell->bounds[0].x - mStruct.bounds[0].x, cell->bounds[1].x - mStruct.bounds[1].x, cell->bounds[2].x - mStruct.bounds[2].x };
+
+			cl_int3 index = { (boundsOffset.x / boundsSize[0]) * GRID_CELL_ROW_COUNT, (boundsOffset.y / boundsSize[1]) * GRID_CELL_ROW_COUNT, (boundsOffset.z / boundsSize[2]) * GRID_CELL_ROW_COUNT };
+
+			int coord = getGridOffset(index);
+
+			for (auto leaf_tri = cell->triangles.begin(); leaf_tri != cell->triangles.end() && world->getTriangleCountGrid()[coord] < GRID_MAX_TRIANGLES_PER_CELL; ++leaf_tri) {
+				world->addTriangleToGrid(*leaf_tri, coord);
 			}
+
 		}
 	}
 

@@ -24,7 +24,7 @@ typedef struct __attribute__ ((aligned(16))){
 	float3 camera;
     float pitch;
     float yaw;
-    uchar bounces;
+    uint bounces;
 } RayConfig;
 
 typedef struct __attribute__ ((aligned(16))){
@@ -37,21 +37,24 @@ typedef struct __attribute__ ((aligned(16))){
 typedef struct __attribute__ ((aligned(16))){
     float3 position;
     float radius;
-    uchar material;
+    uint material;
 } Sphere;
 
 typedef struct __attribute__ ((aligned(16))) {
     float3 normal;
 	int3 vertices;
-	uchar materialIndex;
+	uint materialIndex;
 } Triangle;
 
 typedef struct __attribute__ ((aligned(16))){
-	uint triangleGrid[CUBE(GRID_CELL_ROW_COUNT) * GRID_MAX_TRIANGLES_PER_CELL]; // Stores index of triangles in each grid cell
-	uchar cellTriangleCount[CUBE(GRID_CELL_ROW_COUNT)]; // Stores the count of triangles in each grid cell
-    float2 bounds[7];
+    float2 bounds[8]; // Only 7 axis but the 8th is for padding (struct alignment)
     uint triangleOffset;
+    uint pad1[3];
     uint numTriangles;
+    uint pad2[3];
+	uint triangleGridOffset;
+    uint pad3[3];
+    uint triangleCountOffset;
 } Model;
 
 typedef struct __attribute__ ((aligned(16))) {
@@ -59,8 +62,11 @@ typedef struct __attribute__ ((aligned(16))) {
 	Triangle triangles[MAX_TRIANGLES];
     Model models[MAX_MODELS];
 	uint numSpheres;
+    uint pad1[3];
     uint numTriangles;
+    uint pad2[3];
     uint numModels;
+    uint pad3[3];
 } World;
 
 typedef struct TraceResult TraceResult;
@@ -71,10 +77,10 @@ struct __attribute__ ((aligned(16))) TraceResult{
     float T;
     float T2;
     float cosine;
-    uchar objectType;
-    uchar objectIndex;
-    uchar material;
-    uchar bounce;
+    uint objectType;
+    uint objectIndex;
+    uint material;
+    uint bounce;
     bool hasIntersect;
     bool hasTraced;
 };

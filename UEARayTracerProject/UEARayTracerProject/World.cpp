@@ -14,6 +14,12 @@ void World::create() {
 
 	materialBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(Material) * materials.size(), &materials[0], &err);
 	cl::printErrorMsg("Create Material Buffer", __LINE__, __FILE__, err);
+
+	triangleGridBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * triangleGrid.size(), &triangleGrid[0], &err);
+	cl::printErrorMsg("Create Triangle Grid Buffer", __LINE__, __FILE__, err);
+
+	triangleCountGridBuffer = clCreateBuffer(cl::context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * triangleCountGrid.size(), &triangleCountGrid[0], &err);
+	cl::printErrorMsg("Create Triangle Count Grid Buffer", __LINE__, __FILE__, err);
 }
 
 ModelStruct* World::addModel(ModelStruct modelStruct)
@@ -65,6 +71,18 @@ unsigned int World::addMaterial(Material m)
 {
 	materials.push_back(m);
 	return materials.size() - 1;
+}
+
+void World::addTriangleGrid(unsigned int* gridOffset, unsigned int* countOffset) {
+	*gridOffset = triangleGrid.size();
+	*countOffset = triangleCountGrid.size();
+	triangleGrid.resize(triangleGrid.size() + GRID_CELL_COUNT * GRID_MAX_TRIANGLES_PER_CELL, 0);
+	triangleCountGrid.resize(triangleCountGrid.size() + GRID_CELL_COUNT, 0);
+}
+
+void World::addTriangleToGrid(unsigned int triangle, unsigned int offset) {
+	triangleGrid[offset + triangleCountGrid[offset]] = triangle;
+	triangleCountGrid[offset]++;
 }
 
 void World::setTriangleMaterial(unsigned int triangle, unsigned int material)

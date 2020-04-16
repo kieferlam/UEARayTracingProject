@@ -19,21 +19,21 @@ cl_float3 _mesh_computeTriangleNormal(const cl_float3 & edge1, const cl_float3 &
 }
 
 void _mesh_getTriangleAxis(cl_float3* axis, const cl_float3 & v1, const cl_float3 & v2, const cl_float3 & v3) {
-	cl_float3 edge1 = v2 - v1;
-	cl_float3 edge2 = v3 - v1;
-	cl_float3 edge3 = v2 - v3;
+	cl_float3 edge1 = _world_normalise(v2 - v1);
+	cl_float3 edge2 = _world_normalise(v3 - v1);
+	cl_float3 edge3 = _world_normalise(v2 - v3);
 	cl_float3 normal = _mesh_computeTriangleNormal(edge1, edge2);
 	axis[0] = edge1;
 	axis[1] = edge2;
 	axis[2] = edge3;
 	axis[3] = normal;
-	axis[4] = _world_cross(X_AXIS, edge1);
-	axis[5] = _world_cross(Y_AXIS, edge1);
-	axis[6] = _world_cross(Z_AXIS, edge1);
-	axis[7] = _world_cross(X_AXIS, edge2);
-	axis[8] = _world_cross(Y_AXIS, edge2);
-	axis[9] = _world_cross(Z_AXIS, edge2);
-}
+	axis[4] = _world_normalise(_world_cross(X_AXIS, edge1));
+	axis[5] = _world_normalise(_world_cross(Y_AXIS, edge1));
+	axis[6] = _world_normalise(_world_cross(Z_AXIS, edge1));
+	axis[7] = _world_normalise(_world_cross(X_AXIS, edge2));
+	axis[8] = _world_normalise(_world_cross(Y_AXIS, edge2));
+	axis[9] = _world_normalise(_world_cross(Z_AXIS, edge2));
+}														  
 
 Mesh::Mesh()
 {
@@ -97,19 +97,56 @@ void Mesh::createBoundingVolume(const Triangle* faces, const std::vector<cl_floa
 		bounds[i].x = std::numeric_limits<float>::max(); // Min
 		bounds[i].y = std::numeric_limits<float>::min(); // Max
 
-		for (auto it = triangles.begin(); it != triangles.end(); ++it) {
+		for (auto it = octree.triangles.begin(); it != octree.triangles.end(); ++it) {
 			const Triangle face = faces[*it];
-			// Min
-			bounds[i].x = std::min(bounds[i].x, _mesh_projectVertex(planeNormal, vertices[face.face.x]));
-			bounds[i].x = std::min(bounds[i].x, _mesh_projectVertex(planeNormal, vertices[face.face.y]));
-			bounds[i].x = std::min(bounds[i].x, _mesh_projectVertex(planeNormal, vertices[face.face.z]));
-			// Max
-			bounds[i].y = std::max(bounds[i].y, _mesh_projectVertex(planeNormal, vertices[face.face.x]));
-			bounds[i].y = std::max(bounds[i].y, _mesh_projectVertex(planeNormal, vertices[face.face.y]));
-			bounds[i].y = std::max(bounds[i].y, _mesh_projectVertex(planeNormal, vertices[face.face.z]));
+			cl_float projected[3] = {
+				_mesh_projectVertex(planeNormal, vertices[face.face.x]),
+				_mesh_projectVertex(planeNormal, vertices[face.face.y]),
+				_mesh_projectVertex(planeNormal, vertices[face.face.z])
+			};
+			for (int b = 0; b < 3; ++b) {
+				bounds[i].x = std::min(bounds[i].x, projected[b]);
+				bounds[i].y = std::max(bounds[i].y, projected[b]);
+			}
 		}
 
 	}
+}
+
+bool _mesh_triangleBoxIntersect(const cl_float3 * vertices, const cl_float2 * bounds) {
+	cl_float3 axis[13] = { X_AXIS, Y_AXIS, Z_AXIS };
+
+	_mesh_getTriangleAxis(&axis[3], vertices[0], vertices[1], vertices[2]);
+	// Get box vertices
+	cl_float3 boxVertices[6] = {
+		{ bounds[0].x, bounds[1].x, bounds[2].x },
+		{ bounds[0].y, bounds[1].y, bounds[2].y },
+		{ bounds[0].y, bounds[1].y, bounds[2].x },
+		{ bounds[0].y, bounds[1].x, bounds[2].x },
+		{ bounds[0].x, bounds[1].x, bounds[2].y },
+		{ bounds[0].x, bounds[1].y, bounds[2].y }
+	};
+	// Axis loop
+	for (int i = 0; i < 12; ++i) {
+		// Project box onto axis
+		cl_float boxP[6];
+		for (int b = 0; b < 6; ++b) {
+			boxP[b] = _mesh_projectToAxis(axis[i], boxVertices[b]);
+		}
+
+		// Project triangle onto axis
+		cl_float triP[3];
+		for (int v = 0; v < 3; ++v) {
+			triP[v] = _mesh_projectToAxis(axis[i], vertices[v]);
+		}
+
+		// If no overlap, continue to next triangle
+		if (!_mesh_overlap(_mesh_min(boxP, 6), _mesh_max(boxP, 6), _mesh_min(triP, 3), _mesh_max(triP, 3))) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**
@@ -119,9 +156,8 @@ void Mesh::createBoundingVolume(const Triangle* faces, const std::vector<cl_floa
 */
 void Mesh::getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cellTriangles, cl_uchar* triangleCount)
 {
-	cl_float3 axis[13] = { X_AXIS, Y_AXIS, Z_AXIS };
 
-	for(auto tri = triangles.begin(); tri != triangles.end(); ++tri){
+	for(auto tri = octree.triangles.begin(); tri != octree.triangles.end(); ++tri){
 		Triangle* face = world->getTriangle(*tri);
 		cl_float3 vertices[3] = { world->getVertexBuffer()[face->face.x], world->getVertexBuffer()[face->face.y], world->getVertexBuffer()[face->face.z] };
 
@@ -134,7 +170,7 @@ void Mesh::getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cel
 		bool skipTriangle = false;
 		for (int i = 0; i < 3; ++i) {
 			if (_mesh_aabb(bounds[0], bounds[1], bounds[2], { vertices[i].x, vertices[i].x }, { vertices[i].y, vertices[i].y }, { vertices[i].z, vertices[i].z })) {
-				cellTriangles[*triangleCount++] = *tri;
+				cellTriangles[(*triangleCount)++] = *tri;
 				skipTriangle = true;
 				break;
 			}
@@ -142,39 +178,78 @@ void Mesh::getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cel
 		if (skipTriangle) continue;
 
 		// Perform SAT test for tri box
-		_mesh_getTriangleAxis(&axis[3], vertices[0], vertices[1], vertices[2]);
-		// Get box vertices
-		cl_float3 boxVertices[6] = {
-			{ bounds[0].x, bounds[1].x, bounds[2].x },
-			{ bounds[0].y, bounds[1].y, bounds[2].y },
-			{ bounds[0].y, bounds[1].y, bounds[2].x },
-			{ bounds[0].y, bounds[1].x, bounds[2].x },
-			{ bounds[0].x, bounds[1].x, bounds[2].y },
-			{ bounds[0].x, bounds[1].y, bounds[2].y }
-		};
-		// Axis loop
-		for (int i = 0; i < 12; ++i) {
-			// Project box onto axis
-			cl_float boxP[6];
-			for (int b = 0; b < 6; ++b) {
-				boxP[b] = _mesh_projectToAxis(axis[i], boxVertices[b]);
-			}
-
-			// Project triangle onto axis
-			cl_float triP[3];
-			for (int v = 0; v < 3; ++v) {
-				triP[v] = _mesh_projectToAxis(axis[i], vertices[v]);
-			}
-
-			// If no overlap, continue to next triangle
-			if (!_mesh_overlap(_mesh_min(boxP, 6), _mesh_max(boxP, 6), _mesh_min(triP, 3), _mesh_max(triP, 3))) {
-				skipTriangle = true;
-				break;
-			}
-		}
-		if (skipTriangle) continue;
+		if (!_mesh_triangleBoxIntersect(vertices, bounds)) continue;
 
 		// There is overlap in all axis so add triangle
-		cellTriangles[*triangleCount++] = *tri;
+		cellTriangles[(*triangleCount)++] = *tri;
+	}
+}
+
+void _mesh_createOctreeChildren(OctreeCell* parentCell, World* world, int maxDepth, std::vector<OctreeCell*> & leafnodes) {
+	float midpoints[3];
+	for (int i = 0; i < 3; ++i) midpoints[i] = (parentCell->bounds[i].y + parentCell->bounds[i].x) * 0.5f;
+
+	// Initialize children
+	for (int i = 0; i < 8; ++i) {
+		parentCell->children[i] = new OctreeCell();
+		parentCell->children[i]->depth = parentCell->depth + 1;
+	}
+
+	// Set bounds for children
+	// -X-Y-Z
+	for (int i = 0; i < 3; ++i) parentCell->children[0]->bounds[i] = { parentCell->bounds[i].x, midpoints[i] };
+	// -X-Y+Z
+	for(int i = 0; i < 2; ++i) parentCell->children[1]->bounds[i] = { parentCell->bounds[i].x, midpoints[i] };
+	parentCell->children[1]->bounds[2] = { midpoints[2], parentCell->bounds[2].y };
+	// -X+Y-Z
+	parentCell->children[2]->bounds[0] = { parentCell->bounds[0].x, midpoints[0]};
+	parentCell->children[2]->bounds[1] = { midpoints[1], parentCell->bounds[1].y };
+	parentCell->children[2]->bounds[2] = { parentCell->bounds[2].x, midpoints[2] };
+	// -X+Y+Z
+	parentCell->children[3]->bounds[0] = { parentCell->bounds[0].x, midpoints[0] };
+	for(int i = 1; i < 3; ++i) parentCell->children[3]->bounds[i] = { midpoints[i], parentCell->bounds[i].y };
+	// +X-Y-Z
+	parentCell->children[4]->bounds[0] = { midpoints[0], parentCell->bounds[0].y };
+	for (int i = 1; i < 3; ++i) parentCell->children[4]->bounds[i] = { parentCell->bounds[i].x, midpoints[i] };
+	// +X-Y+Z
+	parentCell->children[5]->bounds[0] = { midpoints[0], parentCell->bounds[0].y };
+	parentCell->children[5]->bounds[1] = { parentCell->bounds[1].x, midpoints[1] };
+	parentCell->children[5]->bounds[2] = { midpoints[2], parentCell->bounds[2].y };
+	// +X+Y-Z
+	for (int i = 0; i < 2; ++i) parentCell->children[6]->bounds[i] = { midpoints[i], parentCell->bounds[i].y };
+	parentCell->children[6]->bounds[2] = { parentCell->bounds[2].x, midpoints[2] };
+	// +X+Y+Z
+	for (int i = 0; i < 3; ++i) parentCell->children[7]->bounds[i] = { midpoints[i], parentCell->bounds[i].y };
+
+	// Loop through each child cell and perform SAT with triangles
+	for (int i = 0; i < 8; ++i) {
+		for (auto it = parentCell->triangles.begin(); it != parentCell->triangles.end(); ++it) {
+			const Triangle* triangle = world->getTriangle(*it);
+			const cl_float3 vertices[3] = { world->getVertexBuffer()[triangle->face.x], world->getVertexBuffer()[triangle->face.y], world->getVertexBuffer()[triangle->face.z] };
+			if (_mesh_triangleBoxIntersect(vertices, parentCell->bounds)) {
+				parentCell->children[i]->triangles.push_back(*it);
+			}
+		}
+
+		// If is leaf node, add to leaf nodes
+		if (parentCell->children[i]->depth == maxDepth && parentCell->children[i]->triangles.size() > 0) {
+			leafnodes.push_back(parentCell->children[i]);
+		}
+
+		// Recursive octree children
+		if (parentCell->children[i]->triangles.size() > 0 && parentCell->depth < maxDepth) {
+			_mesh_createOctreeChildren(parentCell->children[i], world, maxDepth, leafnodes);
+		}
+	}
+}
+
+void Mesh::constructOctree(World* world, int depth, const cl_float2* bounds)
+{
+	octree.depth = 0;
+	for (int i = 0; i < 3; ++i) octree.bounds[i] = bounds[i];
+	_mesh_createOctreeChildren(&octree, world, depth, leafCells);
+
+	if (depth == 0) {
+		leafCells.push_back(&octree);
 	}
 }

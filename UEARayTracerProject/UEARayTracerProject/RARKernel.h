@@ -23,7 +23,7 @@ __declspec (align(16)) struct RayConfig {
 	cl_float3 camera;
 	cl_float pitch;
 	cl_float yaw;
-	cl_uchar bounces;
+	cl_uint bounces;
 };
 
 __declspec (align(16)) struct TraceResult {
@@ -33,10 +33,10 @@ __declspec (align(16)) struct TraceResult {
 	cl_float T;
 	cl_float T2;
 	cl_float cosine;
-	cl_uchar objectType;
-	cl_uchar objectIndex;
-	cl_uchar material;
-	cl_uchar bounce;
+	cl_uint objectType;
+	cl_uint objectIndex;
+	cl_uint material;
+	cl_uint bounce;
 	cl_bool hasIntersect;
 	cl_bool hasTraced;
 };
@@ -53,6 +53,8 @@ class RARKernel : public CLKernel {
 
 	cl_mem* vertexBuffer;
 	cl_mem* materialBuffer;
+	cl_mem* triangleGridBuffer;
+	cl_mem* triangleCountGridBuffer;
 
 	cl_event updateEvent, queueEvent;
 
@@ -69,6 +71,8 @@ public:
 
 	inline void setVertexBuffer(cl_mem* ptr) { vertexBuffer = ptr; }
 	inline void setMaterialBuffer(cl_mem* ptr) { materialBuffer = ptr; }
+	inline void setTriangleGridBuffer(cl_mem* ptr) { triangleGridBuffer = ptr; }
+	inline void setTrianlgeCountGridBuffer(cl_mem* ptr) { triangleCountGridBuffer = ptr; }
 
 	void read();
 

@@ -8,14 +8,21 @@
 #include "Model.h"
 
 #define MAX_SPHERES (8)
-#define MAX_TRIANGLES (65536)
+#define MAX_TRIANGLES (2048)
 #define MAX_MODELS (32)
-
-#define GRID_CELL_ROW_COUNT (32)
-#define GRID_MAX_TRIANGLES_PER_CELL (8)
 
 #define SQ(x) ((x)*(x)) 
 #define CUBE(x) ((x)*(x)*(x))
+
+#define GRID_CELL_DEPTH (4)
+#define GRID_MAX_TRIANGLES_PER_CELL (128) // MAKE SURE THIS IS A MULTIPLE OF 16
+
+inline constexpr int static_pow(const int base, const int exp) { return (exp == 0) ? 1 : base * static_pow(base, exp-1); }
+
+constexpr int GRID_CELL_ROW_COUNT = static_pow(2, GRID_CELL_DEPTH);
+constexpr int GRID_CELL_COUNT = CUBE(GRID_CELL_ROW_COUNT);
+
+inline constexpr unsigned int getGridOffset(const cl_int3 coord) { return coord.x * SQ(GRID_CELL_ROW_COUNT) + coord.y * GRID_CELL_ROW_COUNT + coord.z; }
 
 inline cl_float _world_computeLength(cl_float3 vector) {
 	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
@@ -48,11 +55,15 @@ inline cl_float3 _world_computeTriangleNormal(cl_float3 v0, cl_float3 v1, cl_flo
 class Model;
 
 __declspec (align(16)) struct ModelStruct {
-	cl_uint triangleGrid[CUBE(GRID_CELL_ROW_COUNT) * GRID_MAX_TRIANGLES_PER_CELL]; // Stores index of triangles in each grid cell
-	cl_uchar cellTriangleCount[CUBE(GRID_CELL_ROW_COUNT)]; // Stores the count of triangles in each grid cell
-	cl_float2 bounds[7];
+	cl_float2 bounds[8]; // Only 7 axis but the 8th is for padding (struct alignment)
 	cl_uint triangleOffset;
+	cl_uint pad1[3];
 	cl_uint numTriangles;
+	cl_uint pad2[3];
+	cl_uint triangleGridOffset;
+	cl_uint pad3[3];
+	cl_uint triangleCountOffset;
+	cl_uint pad4[3];
 };
 
 __declspec (align(16)) struct WorldStruct {
@@ -60,8 +71,11 @@ __declspec (align(16)) struct WorldStruct {
 	Triangle triangles[MAX_TRIANGLES];
 	ModelStruct models[MAX_MODELS];
 	cl_uint numSpheres;
+	cl_uint pad1[3];
 	cl_uint numTriangles;
+	cl_uint pad2[3];
 	cl_uint numModels;
+	cl_uint pad3[3];
 };
 
 class World {
@@ -78,6 +92,12 @@ class World {
 	std::vector<Material> materials;
 	cl_mem materialBuffer;
 
+	std::vector<unsigned int> triangleGrid;
+	cl_mem triangleGridBuffer;
+
+	std::vector<unsigned int> triangleCountGrid;
+	cl_mem triangleCountGridBuffer;
+
 public:
 
 	void create();
@@ -87,6 +107,10 @@ public:
 	inline cl_mem* getVertexBufferPtr() { return &vertexBuffer; }
 
 	inline cl_mem* getMaterialBufferPtr() { return &materialBuffer; }
+
+	inline cl_mem* getTriangleGridPtr() { return &triangleGridBuffer; }
+
+	inline cl_mem* getTriangleCountPtr() { return &triangleCountGridBuffer; }
 
 	inline std::vector<cl_float3>& getVertexBuffer() { return vertices; }
 
@@ -109,6 +133,14 @@ public:
 	unsigned int addVertex(cl_float3 vertex);
 
 	unsigned int addMaterial(Material m);
+
+	void addTriangleGrid(unsigned int * gridOffset, unsigned int * countOffset);
+
+	void addTriangleToGrid(unsigned int triangle, unsigned int offset);
+
+	inline std::vector<unsigned int>& getTriangleGrid() { return triangleGrid; }
+
+	inline std::vector<unsigned int>& getTriangleCountGrid() { return triangleCountGrid; }
 
 	void setTriangleMaterial(unsigned int triangle, unsigned int material);
 

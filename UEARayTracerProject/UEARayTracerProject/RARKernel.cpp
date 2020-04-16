@@ -24,14 +24,12 @@ void RARKernel::create() {
 	cl::printErrorMsg("Config Buffer", __LINE__, __FILE__, err);
 
 	// Create results 2D array
-	cl_ulong maxMemAllocSize;
-	clGetDeviceInfo(cl::device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &maxMemAllocSize, NULL);
 	size_t outputBufferSize = sizeof(TraceResult) * config->width * config->height * numrays;
-	if (outputBufferSize > maxMemAllocSize) {
+	if (outputBufferSize > cl::device_info.max_constant_buffer) {
 		std::cout << "Warning! Attempting to allocate buffer larger than OpenCL max buffer size." << std::endl;
-		outputBufferSize = maxMemAllocSize;
+		outputBufferSize = cl::device_info.max_constant_buffer;
 	}
-	std::cout << "Max mem alloc size: " << maxMemAllocSize << std::endl;
+	std::cout << "Max mem alloc size: " << cl::device_info.max_constant_buffer << std::endl;
 	outputBuffer = clCreateBuffer(cl::context, CL_MEM_READ_WRITE, outputBufferSize, NULL, &err);
 	cl::printErrorMsg("Output Buffer", __LINE__, __FILE__, err);
 
@@ -50,6 +48,12 @@ void RARKernel::create() {
 
 	err = clSetKernelArg(getKernel(), 4, sizeof(*materialBuffer), materialBuffer);
 	cl::printErrorMsg("Material Buffer Kernel Arg", __LINE__, __FILE__, err);
+
+	err = clSetKernelArg(getKernel(), 5, sizeof(*triangleGridBuffer), triangleGridBuffer);
+	cl::printErrorMsg("Triangle Grid Buffer Kernel Arg", __LINE__, __FILE__, err);
+
+	err = clSetKernelArg(getKernel(), 6, sizeof(*triangleCountGridBuffer), triangleCountGridBuffer);
+	cl::printErrorMsg("Triangle Count Buffer Kernel Arg", __LINE__, __FILE__, err);
 }
 
 cl_event RARKernel::update() {

@@ -25,6 +25,8 @@ public:
 	Model();
 	~Model();
 
+	inline ModelStruct* getStruct() { return modelStruct; }
+
 	void loadFromFile(const char* filename, World* world, float scale);
 
 };

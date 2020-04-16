@@ -11,6 +11,8 @@ class CLKernel {
 
 	cl_kernel kernel;
 
+	void display_kernel_info();
+
 public:
 	inline CLKernel() : kernelName("INVALID") {};
 	inline CLKernel(std::string name) : kernelName(name) {};
@@ -26,6 +28,7 @@ public:
 			std::cout << "Could not create " << getKernelName() << " kernel." << std::endl;
 			return false;
 		}
+		display_kernel_info();
 		return true;
 	}
 

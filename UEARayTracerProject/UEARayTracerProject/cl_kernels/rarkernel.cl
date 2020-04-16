@@ -10,7 +10,15 @@
 This function just calculates the intersections of a ray and the scene/world.
 Image processing and ray-combination should happen elsewhere.
 */
-void trace(__constant RayConfig* input, __constant World* world, __constant float3* vertices, const Ray* ray, __global TraceResult* result){
+void trace(
+    __constant RayConfig* input, 
+    __constant World* world, 
+    __constant float3* vertices, 
+    TRIANGLE_GRID grid, 
+    TRIANGLE_GRID_COUNT triangleCountGrid, 
+    const Ray* ray, 
+    __global TraceResult* result){
+
     result->hasTraced = true;
     // Sphere intersection
     float closest_T = MAX_VALUE;
@@ -67,11 +75,16 @@ void trace(__constant RayConfig* input, __constant World* world, __constant floa
         }
     }
 
-    // If model bounding volume intersect
-    if(closest_model > -1){
-        model_intersect(world, vertices, ray, closest_model, &closest_T, &closest_i);
-        closest_T2 = closest_T;
-        closest_type = TRIANGLE_TYPE;
+    If model bounding volume intersect
+    if(closest_model_T < closest_T){
+        float model_T;
+        int tri_i;
+        if(model_intersect(world, vertices, grid, triangleCountGrid, ray, closest_model, &model_T, &tri_i)){
+            closest_T = model_T;
+            closest_T2 = closest_T;
+            closest_i = tri_i;
+            closest_type = TRIANGLE_TYPE;
+        }
     }
 
     // If no intersect, stop
@@ -130,7 +143,16 @@ void trace_refract_exit(__constant RayConfig* config, __constant World* world, _
     result->cosine = dot(ray->direction, result->normal);
 }
 
-__kernel void RARTrace(__constant RayConfig* config, __constant World* world, __global TraceResult* results, __constant float3* vertices, __constant Material* materials){
+__kernel void RARTrace(
+    __constant RayConfig* config, 
+    __constant World* world, 
+    __global TraceResult* results, 
+    __constant float3* vertices, 
+    __constant Material* materials,
+    TRIANGLE_GRID triangleGrid,
+    TRIANGLE_GRID_COUNT triangleCountGrid
+    ){
+
     // These are the global IDs for the current instance of the kernel
     int idx = get_global_id(0);
     int idy = get_global_id(1);
@@ -149,7 +171,7 @@ __kernel void RARTrace(__constant RayConfig* config, __constant World* world, __
         int rayOffset = offsets[i];
         __global TraceResult* result = baseResult + rayOffset;
         Ray r = result->ray;
-        trace(config, world, vertices, &r, result);
+        trace(config, world, vertices, triangleGrid, triangleCountGrid, &r, result);
 
         if(rar_getBounceNumber(offsets[i]) >= config->bounces) continue;
         

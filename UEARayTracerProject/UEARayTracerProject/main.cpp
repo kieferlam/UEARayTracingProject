@@ -20,6 +20,7 @@
 #include "RayTraceKernel.h"
 #include "ResetKernel.h"
 #include "Model.h"
+#include "TestKernel.h"
 
 constexpr float PI = 3.14159265359f;
 constexpr float PI2 = 3.14159265359f * 2;
@@ -40,8 +41,9 @@ RARKernel rarkernel;
 ImageResolverKernel imagekernel;
 RayTraceKernel raytracekernel;
 ResetKernel resetkernel;
+TestKernel testkernel;
 CLKernel* kernels[] = {
-	&rarkernel, &imagekernel, &resetkernel
+	&rarkernel, &imagekernel, &resetkernel, &testkernel
 };
 
 World world;
@@ -117,10 +119,7 @@ bool initGL() {
 
 bool buildCL() {
 	const std::vector<std::string> sources = {
-		 //"cl_kernels/raytrace.cl",
-		 "cl_kernels/rarkernel.cl",
-		 "cl_kernels/imageresolver.cl",
-		 "cl_kernels/resetkernel.cl"
+		 "cl_kernels/kernels.cl"
 	};
 
 	for (auto it = sources.begin(); it != sources.end(); ++it) {
@@ -343,6 +342,76 @@ void updateCameraMovement(float deltaTime) {
 	if (moveDown) config.camera.y -= cameraMoveSpeed * deltaTime;
 }
 
+void runStructChecks() {
+	std::cout << "Size of cl_char:\t" << sizeof(cl_char) << std::endl;
+	std::cout << "Size of cl_int:\t" << sizeof(cl_int) << std::endl;
+	std::cout << "Size of cl_float:\t" << sizeof(cl_float) << std::endl;
+	std::cout << "Size of cl_float2:\t" << sizeof(cl_float2) << std::endl;
+	std::cout << "Size of cl_float3:\t" << sizeof(cl_float3) << std::endl;
+	std::cout << "Size of cl_float4:\t" << sizeof(cl_float4) << std::endl;
+
+	std::cout << "Size of ModelStruct:\t" << sizeof(ModelStruct) << "\tr.16:\t" << sizeof(ModelStruct) % 16 << std::endl;
+	std::cout << "Size of WorldStruct:\t" << sizeof(WorldStruct) << "\tr.16:\t" << sizeof(WorldStruct) % 16 << std::endl;
+	std::cout << "Size of RayConfig:\t" << sizeof(RayConfig) << "\tr.16:\t" << sizeof(RayConfig) % 16 << std::endl;
+	std::cout << "Size of Material:\t" << sizeof(Material) << "\tr.16:\t" << sizeof(Material) % 16 << std::endl;
+	std::cout << "Size of Sphere:\t\t" << sizeof(Sphere) << "\tr.16:\t" << sizeof(Sphere) % 16 << std::endl;
+	std::cout << "Size of Triangle:\t" << sizeof(Triangle) << "\tr.16:\t" << sizeof(Triangle) % 16 << std::endl;
+	std::cout << "Size of TraceResult:\t" << sizeof(TraceResult) << "\tr.16:\t" << sizeof(TraceResult) % 16 << std::endl;
+	std::cout << "Size of ImageConfig:\t" << sizeof(ImageConfig) << "\tr.16:\t" << sizeof(ImageConfig) % 16 << std::endl;
+
+	std::cout << "ModelStruct members" << std::endl;
+	std::cout << "triangleGridOffset\t" << sizeof(ModelStruct().triangleGridOffset) << "\tr.16\t" << sizeof(ModelStruct().triangleGridOffset) % 16 << std::endl;
+	std::cout << "triangleCountOffset\t" << sizeof(ModelStruct().triangleCountOffset) << "\tr.16\t" << sizeof(ModelStruct().triangleCountOffset) % 16 << std::endl;
+	std::cout << "bounds\t\t\t" << sizeof(ModelStruct().bounds) << "\tr.16\t" << sizeof(ModelStruct().bounds) % 16 << std::endl;
+	std::cout << "triangleOffset\t\t" << sizeof(ModelStruct().triangleOffset) << "\tr.16\t" << sizeof(ModelStruct().triangleOffset) % 16 << std::endl;
+	std::cout << "numTriangles\t\t" << sizeof(ModelStruct().numTriangles) << "\tr.16\t" << sizeof(ModelStruct().numTriangles) % 16 << std::endl;
+
+	std::cout << "WorldStruct members" << std::endl;
+	std::cout << "spheres\t" << sizeof(WorldStruct().spheres) << "\tr.16\t" << sizeof(WorldStruct().spheres) % 16 << std::endl;
+	std::cout << "triangles\t" << sizeof(WorldStruct().triangles) << "\tr.16\t" << sizeof(WorldStruct().triangles) % 16 << std::endl;
+	std::cout << "models\t" << sizeof(WorldStruct().models) << "\tr.16\t" << sizeof(WorldStruct().models) % 16 << std::endl;
+	std::cout << "numSpheres\t" << sizeof(WorldStruct().numSpheres) << "\tr.16\t" << sizeof(WorldStruct().numSpheres) % 16 << std::endl;
+	std::cout << "numTriangles\t" << sizeof(WorldStruct().numTriangles) << "\tr.16\t" << sizeof(WorldStruct().numTriangles) % 16 << std::endl;
+	std::cout << "numModels\t" << sizeof(WorldStruct().numModels) << "\tr.16\t" << sizeof(WorldStruct().numModels) % 16 << std::endl;
+}
+
+void runKernelTest(ModelStruct* mstruct, WorldStruct* wstruct) {
+	ModelStruct in_model;
+	if (mstruct == nullptr) {
+		in_model.triangleGridOffset = 3;
+		in_model.triangleCountOffset = 6;
+		for (int i = 0; i < 7; ++i) {
+			in_model.bounds[i] = { (float)i * 2 + 1, (float)i * 2 + 2 };
+		}
+		in_model.triangleOffset = 5;
+		in_model.numTriangles = 10;
+	} else {
+		in_model = *mstruct;
+	}
+
+	WorldStruct in_world;
+	if (wstruct == nullptr) {
+		in_world.spheres[MAX_SPHERES - 1].radius = 34;
+		in_world.triangles[MAX_TRIANGLES - 1].face.x = 42;
+		in_world.models[MAX_MODELS - 1].numTriangles = 24;
+		in_world.numSpheres = 6;
+		in_world.numTriangles = 7;
+		in_world.numModels = 8;
+	} else {
+		in_world = *wstruct;
+	}
+
+	testkernel.setModel(in_model);
+	testkernel.setWorld(in_world);
+	cl_event wait = testkernel.update();
+	testkernel.queue(1, &wait);
+
+	std::string log = testkernel.getTestLog();
+	
+	std::cout << "Test kernel log size(" << log.length() << "): " << std::endl;
+	std::cout << log << std::endl;
+}
+
 int main(void) {
 
 	if (!initGL()) {
@@ -376,7 +445,7 @@ int main(void) {
 
 	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
 	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
-	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 0.0f, 1.3f });
+	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.3f });
 
 	Model testModel;
 	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
@@ -391,6 +460,8 @@ int main(void) {
 	rarkernel.setPrimaryConfig(&config);
 	rarkernel.setVertexBuffer(world.getVertexBufferPtr());
 	rarkernel.setMaterialBuffer(world.getMaterialBufferPtr());
+	rarkernel.setTriangleGridBuffer(world.getTriangleGridPtr());
+	rarkernel.setTrianlgeCountGridBuffer(world.getTriangleCountPtr());
 
 	imagekernel.setRayBuffer(rarkernel.getRayBuffer());
 	imagekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -416,6 +487,10 @@ int main(void) {
 		kernels[i]->create();
 		kernels[i]->update(); // Update once to upload data to buffers
 	}
+
+	// Run kernel struct test
+	runStructChecks();
+	runKernelTest(nullptr, nullptr);
 
 	// Setup OpenGL for rendering
 	// Create shader program
