@@ -66,7 +66,7 @@ bool moveRight, moveLeft;
 bool moveForward, moveBackward;
 bool moveUp, moveDown;
 
-const float cameraMoveSpeed = 10.0f;
+const float cameraMoveSpeed = 20.0f;
 const float mouseCameraSensitivity = 0.001f;
 double mousex, mousey, oldmousex, oldmousey;
 
@@ -415,15 +415,15 @@ void scene1() {
 	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.57f });
 	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, 0.0f, 1.0f, 1.0f });
 	int diffuse[10];
-	std::default_random_engine rng(glfwGetTime());
+	std::default_random_engine rng(rand());
 	std::uniform_real_distribution<float> range(0.0f, 1.0f);
 	for (int i = 0; i < sizeof(diffuse) / sizeof(diffuse[0]); ++i) {
-		diffuse[i] = world.addMaterial({{ range(rng) * 0.7f, range(rng) * 0.7f, range(rng) * 0.7f }, 0.0f, 1.0f, 1.0f});
+		diffuse[i] = world.addMaterial({{ range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f }, 0.0f, 1.0f, 1.0f});
 	}
 
 	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 0);
 	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 1);
-	world.addSphere({ 50.0f, 40.0f, 160.0f }, 40.0f, 1);
+	world.addSphere({ 50.0f, 40.0f, 160.0f }, 40.0f, 2);
 
 	for (int i = 0; i < 5; ++i) {
 		float rad = range(rng) * 9.0f + 1.0f;
@@ -431,7 +431,7 @@ void scene1() {
 	}
 
 	// Floor
-	float floorrad = 100000.0f;
+	float floorrad = 50000.0f;
 	world.addSphere({ 0.0f, -floorrad, 0.0f }, floorrad, floormat);
 }
 

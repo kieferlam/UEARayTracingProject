@@ -131,19 +131,18 @@ bool sphere_intersect(Ray* ray, __constant Sphere* sphere, SphereIntersect* resu
 
     // at^2 + bt + c = 0
     float a = 1.0f; // dot(ray->direction, ray->direction) Since ray direction is normalized, this is just 1.0
-    float b = dot(ray->direction * vec_raysphere, (float3)(2.0f, 2.0f, 2.0f));
-    float c = dot(SQ(vec_raysphere), (float3)(1.0f, 1.0f, 1.0f)) - SQ(sphere->radius);
+    float b = 2.0f * dot(ray->direction, vec_raysphere);
+    float c = dot(vec_raysphere, vec_raysphere) - SQ(sphere->radius);
 
     // t = (-b +- sqrt(b^2 - 4ac)) / 2a;
     float discriminant = SQ(b) - 4*a*c;
     if(discriminant < 0) return false;
 
-    result->minT = (-b - sqrt(SQ(b) - 4.0f*a*c)) / 2.0f;
-    result->maxT = (-b + sqrt(SQ(b) - 4.0f*a*c)) / 2.0f;
+    float dsqrt = sqrt(discriminant);
+    result->minT = (-b - dsqrt) / 2.0f;
+    result->maxT = (-b + dsqrt) / 2.0f;
     if(result->minT > result->maxT){
-        float temp = result->minT;
-        result->minT = result->maxT;
-        result->maxT = temp;
+        swap(&result->minT, &result->maxT);
     }
 
     // Epsilon (Make sure ray from a sphere doesn't intersect itself)

@@ -1,9 +1,10 @@
 #define PI (3.14159265359f)
+#define HPI (1.57079632679f)
 #define SQ(x) ((x)*(x))
 #define CUBE(x) ((x)*(x)*(x))
 #define SQRT33 (0.57735026919f)
 
-#define EPSILON (0.001f)
+#define EPSILON (0.05f)
 
 #define AIR_REFRACTIVE_INDEX (1.005f)
 #define REFRACT_SURFACE_THICKNESS (1.0f)
@@ -21,6 +22,8 @@
 #define BVH_PLANE_COUNT (7)
 
 #define DAYLIGHT_COSINE_STRENGTH (0.7f)
+#define DAYLIGHT_SHADOW_STRENGTH (0.3f)
+#define DAYLIGHT_SHADOW_SOFTNESS (0.0f)
 
 #define MAX_RESULT_TREE_STACK (243)
 
@@ -33,4 +36,4 @@ typedef __constant unsigned int* TRIANGLE_GRID_COUNT;
 
 // Constants
 
-__constant float3 daylight_direction = {-SQRT33, SQRT33, -SQRT33};
+__constant float3 daylight_direction = {SQRT33, -SQRT33, SQRT33};

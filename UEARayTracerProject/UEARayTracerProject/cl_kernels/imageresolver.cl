@@ -11,10 +11,9 @@ struct __attribute__ ((aligned(16))) RayTraceNode{
     float3 reflectOutput;
     float3 refractOutput;
     float3 output;
-    RayTraceNode* parent;
     RayTraceNode* reflectChild;
     RayTraceNode* refractChild;
-    RayTraceNode* pad1;
+    RayTraceNode* shadowChild;
     uint offset;
     uint visit;
     uint type; // 0 = root; 1 = reflection; 2 = refraction; 3 = shadow;
@@ -119,8 +118,7 @@ RayTraceNode* addStack(RayTraceNode* stack, int* stackHead, __constant TraceResu
     next->result = result;
     next->reflectChild = 0;
     next->refractChild = 0;
-    next->reflectOutput = (float3)(0.0f, 0.0f, 0.0f);
-    next->refractOutput = (float3)(0.0f, 0.0f, 0.0f);
+    next->shadowChild = 0;
     next->output = (float3)(0.0f, 0.0f, 0.0f);
     next->offset = offset;
     next->visit = 0;
@@ -151,7 +149,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
         addStack(treeStack, &stackHead, baseResult, 0, 0);
 
         // Add rays and their bounces to stack
-        while(stackHead > 0 && stackHead < MAX_RESULT_TREE_STACK - 3){
+        while(stackHead > 0 && stackHead < MAX_RESULT_TREE_STACK - NUM_RAY_CHILDREN){
             /**
             Conditions:
             Visit 1: Add reflect node
@@ -169,13 +167,19 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                 uint reflectChildIndex = rar_getReflectChild(currentNode->offset);
                 if(baseResult[reflectChildIndex].hasTraced){ // Reflect child node
                     // Add reflect trace to stack
-                    currentNode->reflectChild = addStack(treeStack, &stackHead, baseResult + reflectChildIndex, reflectChildIndex, REFLECT_TYPE);
+                    //currentNode->reflectChild = addStack(treeStack, &stackHead, baseResult + reflectChildIndex, reflectChildIndex, REFLECT_TYPE);
                 }
             }else if(currentNode->visit == REFRACT_TYPE){
                 uint refractChildIndex = rar_getRefractChild(currentNode->offset);
                 if(baseResult[refractChildIndex].hasTraced){
                     // Add refract trace to stack
                     currentNode->refractChild = addStack(treeStack, &stackHead, baseResult + refractChildIndex, refractChildIndex, REFRACT_TYPE);
+                }
+            }else if(currentNode->visit == SHADOW_TYPE){
+                uint shadowChildIndex = rar_getShadowChild(currentNode->offset);
+                if(baseResult[shadowChildIndex].hasTraced){
+                    // Add shadow trace to stack
+                    currentNode->shadowChild = addStack(treeStack, &stackHead, baseResult + shadowChildIndex, shadowChildIndex, SHADOW_TYPE);
                 }
             }else{ 
                 // This branch is where the the actual colour processing occurs
@@ -185,11 +189,18 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
                 if(currentNode->result->hasIntersect){
                     __constant Material* objectMaterial = materials + currentNode->result->material;
                     float kr = fresnel(currentNode->result->ray.direction, currentNode->result->normal, AIR_REFRACTIVE_INDEX, objectMaterial->refractiveIndex);
-                    float daylight_cosine = 1.0f - max(-dot(currentNode->result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
+                    float daylight_cosine = 1.0f - max(dot(currentNode->result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
+                    uint shadowChildIndex = rar_getShadowChild(currentNode->offset);
 
                     // Calculate emission
                     float3 emission = objectMaterial->diffuse * daylight_cosine;
-                   if(currentNode->refractChild->processed) emission = mix(currentNode->refractChild->output, emission, objectMaterial->opacity);
+                    if(currentNode->refractChild->processed) emission = mix(currentNode->refractChild->output, emission, objectMaterial->opacity);
+
+                    // Calculate shadows
+                    if(baseResult[shadowChildIndex].hasTraced && baseResult[shadowChildIndex].hasIntersect){
+                        float softness = (-dot(baseResult[shadowChildIndex].normal, baseResult[shadowChildIndex].ray.direction) * DAYLIGHT_SHADOW_SOFTNESS);
+                        emission *= ((1.0f - DAYLIGHT_SHADOW_STRENGTH) - softness);
+                    }
 
                     // Calculate reflection
                     float3 reflection = emission;

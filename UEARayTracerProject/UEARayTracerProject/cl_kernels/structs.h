@@ -12,7 +12,6 @@ __constant float3 BVH_PlaneNormals[] = {
 typedef struct __attribute__ ((aligned(16))){
     float3 origin;
     float3 direction;
-    uint2 pixelCoord;
 } Ray;
 
 typedef struct __attribute__ ((aligned(16))){
@@ -78,9 +77,9 @@ struct __attribute__ ((aligned(16))) TraceResult{
     uint objectIndex;
     uint material;
     uint bounce;
-    bool hasIntersect;
-    bool hasTraced;
-    bool pad2[14];
+    int hasIntersect;
+    int hasTraced;
+    bool pad2[2];
 };
 
 typedef struct __attribute__ ((aligned(16))) {

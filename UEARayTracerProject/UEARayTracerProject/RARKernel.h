@@ -14,7 +14,6 @@
 __declspec (align(16)) struct Ray{
 	cl_float3 origin;
 	cl_float3 direction;
-	cl_uint2 pixelCoord;
 } ;
 
 __declspec (align(16)) struct RayConfig {

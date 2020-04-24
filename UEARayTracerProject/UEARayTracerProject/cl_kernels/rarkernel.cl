@@ -156,7 +156,14 @@ __kernel void RARTrace(
     __constant Model* models,
     TRIANGLE_GRID triangleGrid,
     TRIANGLE_GRID_COUNT triangleCountGrid
-    ){
+){
+    // if(debug_isCenterPixel()){
+    //     __constant Sphere s = {{0, 10, 0}, 3, 0};
+    //     Ray r = {{2, 0, 0}, {0, 1, 0}};
+    //     TraceResult result;
+    //     sphere_intersect(&r, &s, &result);
+    //     printf("%f, %f, %f", result.intersect.x, result.intersect.y, result.intersect.z);
+    // }
 
     WorldPack pack = {world, vertices, materials, spheres, triangles, models, triangleGrid, triangleCountGrid};
 
@@ -174,7 +181,7 @@ __kernel void RARTrace(
     int offsets[MAX_RESULT_TREE_STACK];
     offsets[queueTail] = 0;
 
-    for(int i = 0; i <= queueTail && queueTail < MAX_RESULT_TREE_STACK - 3; ++i){
+    for(int i = 0; i <= queueTail && queueTail < MAX_RESULT_TREE_STACK - NUM_RAY_CHILDREN; ++i){
         int rayOffset = offsets[i];
         __global TraceResult* result = baseResult + rayOffset;
         Ray r = result->ray;
@@ -201,23 +208,29 @@ __kernel void RARTrace(
             // Add refractive ray
             if(material->opacity < 1.0f - EPSILON){
                 if(result->objectType == SPHERE_TYPE){ // Only trace exit ray if not triangle
-                    // Find exit ray
-                    Ray internal_ray; // This is the ray which will be traced inside the transparent object
-                    internal_ray.origin = localResult.intersect;
-                    local_getRefractDirection(&internal_ray.direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
-                    TraceResult refract_exit_result;
-                    trace_refract_exit(config, pack, &localResult, &internal_ray, &refract_exit_result);
-                    // Queue refraction ray
+                    __constant Sphere* sphere = spheres + result->objectIndex;
+                    // Calculate internal ray direction
+                    float3 internal_direction;
+                    local_getRefractDirection(&internal_direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
+                    // Calculate exit ray origin
+                    /**
+                        This calculates the angle between the internal ray direction and the normal of the sphere.
+                        Used to find the distance from the internal ray origin (original intersection point) to the exit ray origin.
+                        Together with the internal ray direction, the exit ray origin can be calculated.
+                    */
+                    float internal_theta = fabs(dot(internal_direction, localResult.normal));
+                    float internal_length = sin(internal_theta * HPI) * sphere->radius * 2.0f;
+                    
+                    // Get child ray
                     queueTail++;
                     offsets[queueTail] = rar_getRefractChild(offsets[i]);
-                    if(refract_exit_result.hasIntersect){
-                        __constant Material* refractMaterial = materials + refract_exit_result.material;
-                        baseResult[offsets[queueTail]].ray.origin = refract_exit_result.intersect;
-                        getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_ray.direction, -refract_exit_result.normal, refractMaterial->refractiveIndex, AIR_REFRACTIVE_INDEX);
-                    }else{
-                        baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
-                        getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
-                    }
+
+                    // Set exit ray origin
+                    baseResult[offsets[queueTail]].ray.origin = localResult.intersect + internal_direction * internal_length;
+                    
+                    // Calculate exit ray direction
+                    float3 exit_normal = normalize(baseResult[offsets[queueTail]].ray.origin - sphere->position);
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_direction, -exit_normal, material->refractiveIndex, AIR_REFRACTIVE_INDEX);
                 }else{
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
                     getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
