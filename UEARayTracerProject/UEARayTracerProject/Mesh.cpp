@@ -185,7 +185,7 @@ void Mesh::getTrianglesInGridCell(World * world, cl_float2* bounds, cl_uint* cel
 	}
 }
 
-void _mesh_createOctreeChildren(OctreeCell* parentCell, World* world, int maxDepth, std::vector<OctreeCell*> & leafnodes) {
+void _mesh_createOctreeChildren(OctreeCell* parentCell, World* world, unsigned int maxDepth, std::vector<OctreeCell*> & leafnodes) {
 	float midpoints[3];
 	for (int i = 0; i < 3; ++i) midpoints[i] = (parentCell->bounds[i].y + parentCell->bounds[i].x) * 0.5f;
 
@@ -223,22 +223,23 @@ void _mesh_createOctreeChildren(OctreeCell* parentCell, World* world, int maxDep
 
 	// Loop through each child cell and perform SAT with triangles
 	for (int i = 0; i < 8; ++i) {
+		OctreeCell* child = parentCell->children[i];
 		for (auto it = parentCell->triangles.begin(); it != parentCell->triangles.end(); ++it) {
 			const Triangle* triangle = world->getTriangle(*it);
 			const cl_float3 vertices[3] = { world->getVertexBuffer()[triangle->face.x], world->getVertexBuffer()[triangle->face.y], world->getVertexBuffer()[triangle->face.z] };
-			if (_mesh_triangleBoxIntersect(vertices, parentCell->bounds)) {
-				parentCell->children[i]->triangles.push_back(*it);
+			if (_mesh_triangleBoxIntersect(vertices, child->bounds)) {
+				child->triangles.push_back(*it);
 			}
 		}
 
 		// If is leaf node, add to leaf nodes
-		if (parentCell->children[i]->depth == maxDepth && parentCell->children[i]->triangles.size() > 0) {
-			leafnodes.push_back(parentCell->children[i]);
+		if (child->depth == maxDepth && child->triangles.size() > 0) {
+			leafnodes.push_back(child);
 		}
 
 		// Recursive octree children
-		if (parentCell->children[i]->triangles.size() > 0 && parentCell->depth < maxDepth) {
-			_mesh_createOctreeChildren(parentCell->children[i], world, maxDepth, leafnodes);
+		if (child->triangles.size() > 0 && child->depth < maxDepth) {
+			_mesh_createOctreeChildren(child, world, maxDepth, leafnodes);
 		}
 	}
 }
@@ -251,5 +252,22 @@ void Mesh::constructOctree(World* world, int depth, const cl_float2* bounds)
 
 	if (depth == 0) {
 		leafCells.push_back(&octree);
+	}
+
+	// Test to make sure every triangle is in the leaf cells
+	for (auto tri = octree.triangles.begin(); tri != octree.triangles.end(); ++tri) {
+		bool has = false;
+		for (auto it = leafCells.begin(); it != leafCells.end(); ++it) {
+			for (auto tit = (*it)->triangles.begin(); tit != (*it)->triangles.end(); ++tit) {
+				if (*tit == *tri) {
+					has = true;
+					break;
+				}
+			}
+			if (has) break;
+		}
+		if (!has) {
+			std::cout << "Missing triangle: " << *tri << std::endl;
+		}
 	}
 }

@@ -51,6 +51,9 @@
     <ClCompile Include="CLKernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ClearImageKernel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cl_helper.h">
@@ -96,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TestKernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ClearImageKernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

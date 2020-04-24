@@ -1,5 +1,4 @@
 
-#define SQRT33 (0.57735026919f)
 __constant float3 BVH_PlaneNormals[] = {
 	{1.0f, 0.0f, 0.0f},
 	{0.0f, 1.0f, 0.0f},
@@ -58,9 +57,6 @@ typedef struct __attribute__ ((aligned(16))){
 } Model;
 
 typedef struct __attribute__ ((aligned(16))) {
-	Sphere spheres[MAX_SPHERES];
-	Triangle triangles[MAX_TRIANGLES];
-    Model models[MAX_MODELS];
 	uint numSpheres;
     uint pad1[3];
     uint numTriangles;
@@ -77,13 +73,26 @@ struct __attribute__ ((aligned(16))) TraceResult{
     float T;
     float T2;
     float cosine;
+    float pad1;
     uint objectType;
     uint objectIndex;
     uint material;
     uint bounce;
     bool hasIntersect;
     bool hasTraced;
+    bool pad2[14];
 };
+
+typedef struct __attribute__ ((aligned(16))) {
+    __constant World* world;
+    __constant float3* vertices;
+    __constant Material* materials;
+    __constant Sphere* spheres;
+    __constant Triangle* triangles;
+    __constant Model* models;
+    TRIANGLE_GRID grid;
+    TRIANGLE_GRID_COUNT triangleCountGrid;
+} WorldPack;
 
 typedef struct {
     float minT;

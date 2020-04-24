@@ -13,9 +13,9 @@ cl_platform_id retrievePlatform() {
 	if (numPlatforms == 0) return nullptr;
 
 	// Platform info setup
-	const size_t info_enums[] = {CL_PLATFORM_VERSION, CL_PLATFORM_NAME, CL_PLATFORM_VENDOR, CL_PLATFORM_PROFILE};
+	const cl_platform_info info_enums[] = {CL_PLATFORM_VERSION, CL_PLATFORM_NAME, CL_PLATFORM_VENDOR, CL_PLATFORM_PROFILE};
 
-	for (int i = 0; i < numPlatforms; ++i) {
+	for (size_t i = 0; i < numPlatforms; ++i) {
 		// Loop through enums to retrieve info
 		std::cout << "Platform " << i << ":" << std::endl;
 		for (int j = 0; j < sizeof(info_enums) / sizeof(info_enums[0]); ++j) {
@@ -26,7 +26,7 @@ cl_platform_id retrievePlatform() {
 		}
 	}
 
-	int platform = -1;
+	unsigned int platform = numPlatforms;
 	if (numPlatforms == 1) platform = 0; // If only one platform, just select that one
 	// Ask the user to select a platform.
 	while (platform < 0 || platform >= numPlatforms) {
@@ -45,9 +45,9 @@ cl_device_id retrieveDevice(cl_platform_id platform) {
 	if (numDevices == 0) return nullptr;
 
 	// Device info setup
-	const size_t info_enums[] = { CL_DEVICE_NAME, CL_DEVICE_PROFILE, CL_DEVICE_VENDOR, CL_DEVICE_VERSION, CL_DRIVER_VERSION };
+	const cl_device_info info_enums[] = { CL_DEVICE_NAME, CL_DEVICE_PROFILE, CL_DEVICE_VENDOR, CL_DEVICE_VERSION, CL_DRIVER_VERSION };
 
-	for (int i = 0; i < numDevices; ++i) {
+	for (size_t i = 0; i < numDevices; ++i) {
 		// Loop through enums to retrieve info
 		std::cout << "Device " << i << ":" << std::endl;
 		for (int j = 0; j < sizeof(info_enums) / sizeof(info_enums[0]); ++j) {
@@ -58,7 +58,7 @@ cl_device_id retrieveDevice(cl_platform_id platform) {
 		}
 	}
 
-	int device = -1;
+	unsigned int device = numDevices;
 	if (numDevices == 1) device = 0; // If only one device, just select that one
 	// Ask user to select device
 	while (device < 0 || device >= numDevices) {
@@ -260,7 +260,7 @@ namespace cl {
 		std::cout << std::setw(48) << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: " << std::setw(8) << device_info.max_work_dimensions << std::endl;
 
 		std::cout << std::setw(48) << "CL_DEVICE_MAX_WORK_ITEM_SIZES: " << std::setw(8);
-		for (int i = 0; i < device_info.max_work_dimensions; ++i) std::cout << device_info.max_work_item_sizes[i] << ",";
+		for (size_t i = 0; i < device_info.max_work_dimensions; ++i) std::cout << device_info.max_work_item_sizes[i] << ",";
 		std::cout << std::endl;
 
 		std::cout << std::setw(48) << "CL_DEVICE_MAX_CONSTANT_ARGS: " << std::setw(8) << device_info.max_constant << std::endl;
@@ -294,11 +294,9 @@ namespace cl {
 	std::string getBuildOptions() {
 		std::ostringstream stream;
 		stream << BUILD_OPTIONS
-			<< " -D MAX_SPHERES=" << MAX_SPHERES
-			<< " -D MAX_TRIANGLES=" << MAX_TRIANGLES
-			<< " -D MAX_MODELS=" << MAX_MODELS
 			<< " -D GRID_CELL_ROW_COUNT=" << GRID_CELL_ROW_COUNT
 			<< " -D GRID_MAX_TRIANGLES_PER_CELL=" << GRID_MAX_TRIANGLES_PER_CELL
+			<< " -D NUM_RAY_CHILDREN=" << NUM_RAY_CHILDREN
 			<< " -g "; 
 		if (getConfigBool("useInterop")) stream << "-D USE_INTEROP ";
 		if (getConfigBool("disableWarnings")) stream << "-w ";

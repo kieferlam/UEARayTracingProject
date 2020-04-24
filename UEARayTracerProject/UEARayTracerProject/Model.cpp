@@ -46,7 +46,7 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 		/**
 			Add vertices to world. The indices for the mesh need to be offset by the vertices already in the world object.
 		*/
-		int vertex_index_offset = world->getVertexBuffer().size();
+		size_t vertex_index_offset = world->getVertexBuffer().size();
 		for (auto vertex_it = mesh_it->Vertices.begin(); vertex_it != mesh_it->Vertices.end(); ++vertex_it) {
 			world->addVertex({ vertex_it->Position.X * scale, vertex_it->Position.Y * scale, vertex_it->Position.Z * scale});
 		}
@@ -97,10 +97,13 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 
 			cl_int3 index = { (boundsOffset.x / boundsSize[0]) * GRID_CELL_ROW_COUNT, (boundsOffset.y / boundsSize[1]) * GRID_CELL_ROW_COUNT, (boundsOffset.z / boundsSize[2]) * GRID_CELL_ROW_COUNT };
 
-			int coord = getGridOffset(index);
+			unsigned int coord = getGridOffset(index);
 
 			for (auto leaf_tri = cell->triangles.begin(); leaf_tri != cell->triangles.end() && world->getTriangleCountGrid()[coord] < GRID_MAX_TRIANGLES_PER_CELL; ++leaf_tri) {
 				world->addTriangleToGrid(*leaf_tri, coord);
+				if (world->getTriangleCountGrid()[coord] == GRID_MAX_TRIANGLES_PER_CELL) {
+					std::cout << "Max triangle count per cell reached." << std::endl;
+				}
 			}
 
 		}

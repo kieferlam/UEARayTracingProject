@@ -27,9 +27,10 @@ cl_event ResetKernel::update()
 
 cl_event ResetKernel::queue(cl_uint num_events, cl_event* wait_events)
 {
-	const size_t workgroupOffset[2] = { 0, 0 };
-	const size_t workgroupSize[2] = { config->width, config->height };
-	cl_int err = clEnqueueNDRangeKernel(cl::queue, getKernel(), 2, workgroupOffset, workgroupSize, NULL, num_events, wait_events, &queueEvent);
+	unsigned int numrays = pow(NUM_RAY_CHILDREN, config->bounces + 1) - 1;
+	const size_t workgroupOffset[1] = { 0};
+	const size_t workgroupSize[1] = { config->width * config->height * numrays };
+	cl_int err = clEnqueueNDRangeKernel(cl::queue, getKernel(), 1, workgroupOffset, workgroupSize, NULL, num_events, wait_events, &queueEvent);
 	cl::printErrorMsg("Enqueue Reset Kernel", __LINE__, __FILE__, err);
 	return queueEvent;
 }

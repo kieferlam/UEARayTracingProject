@@ -9,6 +9,8 @@
 #include "World.h"
 #include "Material.h"
 
+#define NUM_RAY_CHILDREN (3)
+
 __declspec (align(16)) struct Ray{
 	cl_float3 origin;
 	cl_float3 direction;
@@ -33,12 +35,14 @@ __declspec (align(16)) struct TraceResult {
 	cl_float T;
 	cl_float T2;
 	cl_float cosine;
+	cl_float pad1;
 	cl_uint objectType;
 	cl_uint objectIndex;
 	cl_uint material;
 	cl_uint bounce;
 	cl_bool hasIntersect;
 	cl_bool hasTraced;
+	cl_bool pad2[14];
 };
 
 class RARKernel : public CLKernel {
@@ -53,6 +57,9 @@ class RARKernel : public CLKernel {
 
 	cl_mem* vertexBuffer;
 	cl_mem* materialBuffer;
+	cl_mem* sphereBuffer;
+	cl_mem* triangleBuffer;
+	cl_mem* modelBuffer;
 	cl_mem* triangleGridBuffer;
 	cl_mem* triangleCountGridBuffer;
 
@@ -71,6 +78,9 @@ public:
 
 	inline void setVertexBuffer(cl_mem* ptr) { vertexBuffer = ptr; }
 	inline void setMaterialBuffer(cl_mem* ptr) { materialBuffer = ptr; }
+	inline void setSphereBuffer(cl_mem* ptr) { sphereBuffer = ptr; }
+	inline void setTriangleBuffer(cl_mem* ptr) { triangleBuffer = ptr; }
+	inline void setModelBuffer(cl_mem* ptr) { modelBuffer = ptr; }
 	inline void setTriangleGridBuffer(cl_mem* ptr) { triangleGridBuffer = ptr; }
 	inline void setTrianlgeCountGridBuffer(cl_mem* ptr) { triangleCountGridBuffer = ptr; }
 

@@ -7,15 +7,11 @@
 #include "Triangle.h"
 #include "Model.h"
 
-#define MAX_SPHERES (8)
-#define MAX_TRIANGLES (2048)
-#define MAX_MODELS (32)
-
 #define SQ(x) ((x)*(x)) 
 #define CUBE(x) ((x)*(x)*(x))
 
-#define GRID_CELL_DEPTH (4)
-#define GRID_MAX_TRIANGLES_PER_CELL (128) // MAKE SURE THIS IS A MULTIPLE OF 16
+#define GRID_CELL_DEPTH (5)
+#define GRID_MAX_TRIANGLES_PER_CELL (64) // MAKE SURE THIS IS A MULTIPLE OF 16
 
 inline constexpr int static_pow(const int base, const int exp) { return (exp == 0) ? 1 : base * static_pow(base, exp-1); }
 
@@ -67,9 +63,6 @@ __declspec (align(16)) struct ModelStruct {
 };
 
 __declspec (align(16)) struct WorldStruct {
-	Sphere spheres[MAX_SPHERES];
-	Triangle triangles[MAX_TRIANGLES];
-	ModelStruct models[MAX_MODELS];
 	cl_uint numSpheres;
 	cl_uint pad1[3];
 	cl_uint numTriangles;
@@ -92,6 +85,15 @@ class World {
 	std::vector<Material> materials;
 	cl_mem materialBuffer;
 
+	std::vector<Triangle> triangles;
+	cl_mem triangleBuffer;
+
+	std::vector<Sphere> spheres;
+	cl_mem sphereBuffer;
+
+	std::vector<ModelStruct> models;
+	cl_mem modelBuffer;
+
 	std::vector<unsigned int> triangleGrid;
 	cl_mem triangleGridBuffer;
 
@@ -107,6 +109,10 @@ public:
 	inline cl_mem* getVertexBufferPtr() { return &vertexBuffer; }
 
 	inline cl_mem* getMaterialBufferPtr() { return &materialBuffer; }
+
+	inline cl_mem* getSphereBufferPtr() { return &sphereBuffer; }
+	inline cl_mem* getTriangleBufferPtr() { return &triangleBuffer; }
+	inline cl_mem* getModelBufferPtr() { return &modelBuffer; }
 
 	inline cl_mem* getTriangleGridPtr() { return &triangleGridBuffer; }
 

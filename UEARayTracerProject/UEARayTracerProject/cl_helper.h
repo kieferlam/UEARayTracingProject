@@ -1,5 +1,7 @@
 #pragma once
 
+#define CL_TARGET_OPENCL_VERSION 220
+
 #include <CL/opencl.h>
 #include <vector>
 #include <iostream>

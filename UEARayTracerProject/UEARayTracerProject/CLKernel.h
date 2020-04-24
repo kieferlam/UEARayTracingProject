@@ -14,8 +14,8 @@ class CLKernel {
 	void display_kernel_info();
 
 public:
-	inline CLKernel() : kernelName("INVALID") {};
-	inline CLKernel(std::string name) : kernelName(name) {};
+	inline CLKernel() : kernelName("INVALID") { };
+	inline CLKernel(std::string name) : kernelName(name) { kernel = nullptr; };
 	inline ~CLKernel() {}
 
 	inline std::string getKernelName() { return kernelName; }

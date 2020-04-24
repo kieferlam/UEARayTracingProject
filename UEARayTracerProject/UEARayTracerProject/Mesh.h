@@ -27,7 +27,7 @@ class World;
 
 struct OctreeCell {
 	std::vector<unsigned int> triangles;
-	OctreeCell* children[8];
+	OctreeCell* children[8] = { nullptr };
 	cl_float2 bounds[3];
 	unsigned int depth;
 };
@@ -35,7 +35,7 @@ struct OctreeCell {
 class Mesh
 {
 
-	cl_float2 bounds[7];
+	cl_float2 bounds[7] = { 0 };
 
 	OctreeCell octree;
 

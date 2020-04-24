@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define CL_TARGET_OPENCL_VERSION 210
+#define CL_TARGET_OPENCL_VERSION 220
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stddef.h>
 #include <chrono>
+#include <random>
 #include "cl_helper.h"
 #include "TracerKernel.h"
 #include "RARKernel.h"
@@ -21,6 +22,7 @@
 #include "ResetKernel.h"
 #include "Model.h"
 #include "TestKernel.h"
+#include "ClearImageKernel.h"
 
 constexpr float PI = 3.14159265359f;
 constexpr float PI2 = 3.14159265359f * 2;
@@ -42,8 +44,9 @@ ImageResolverKernel imagekernel;
 RayTraceKernel raytracekernel;
 ResetKernel resetkernel;
 TestKernel testkernel;
+ClearImageKernel clearimagekernel;
 CLKernel* kernels[] = {
-	&rarkernel, &imagekernel, &resetkernel, &testkernel
+	&rarkernel, &imagekernel, &resetkernel, &testkernel, &clearimagekernel
 };
 
 World world;
@@ -367,9 +370,6 @@ void runStructChecks() {
 	std::cout << "numTriangles\t\t" << sizeof(ModelStruct().numTriangles) << "\tr.16\t" << sizeof(ModelStruct().numTriangles) % 16 << std::endl;
 
 	std::cout << "WorldStruct members" << std::endl;
-	std::cout << "spheres\t" << sizeof(WorldStruct().spheres) << "\tr.16\t" << sizeof(WorldStruct().spheres) % 16 << std::endl;
-	std::cout << "triangles\t" << sizeof(WorldStruct().triangles) << "\tr.16\t" << sizeof(WorldStruct().triangles) % 16 << std::endl;
-	std::cout << "models\t" << sizeof(WorldStruct().models) << "\tr.16\t" << sizeof(WorldStruct().models) % 16 << std::endl;
 	std::cout << "numSpheres\t" << sizeof(WorldStruct().numSpheres) << "\tr.16\t" << sizeof(WorldStruct().numSpheres) % 16 << std::endl;
 	std::cout << "numTriangles\t" << sizeof(WorldStruct().numTriangles) << "\tr.16\t" << sizeof(WorldStruct().numTriangles) % 16 << std::endl;
 	std::cout << "numModels\t" << sizeof(WorldStruct().numModels) << "\tr.16\t" << sizeof(WorldStruct().numModels) % 16 << std::endl;
@@ -391,9 +391,6 @@ void runKernelTest(ModelStruct* mstruct, WorldStruct* wstruct) {
 
 	WorldStruct in_world;
 	if (wstruct == nullptr) {
-		in_world.spheres[MAX_SPHERES - 1].radius = 34;
-		in_world.triangles[MAX_TRIANGLES - 1].face.x = 42;
-		in_world.models[MAX_MODELS - 1].numTriangles = 24;
 		in_world.numSpheres = 6;
 		in_world.numTriangles = 7;
 		in_world.numModels = 8;
@@ -410,6 +407,32 @@ void runKernelTest(ModelStruct* mstruct, WorldStruct* wstruct) {
 	
 	std::cout << "Test kernel log size(" << log.length() << "): " << std::endl;
 	std::cout << log << std::endl;
+}
+
+void scene1() {
+	int mirror = world.addMaterial({ {1.0f, 1.0f, 1.0f}, 1.0f, 1.0f, 1.0f });
+	int hollowglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
+	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.57f });
+	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, 0.0f, 1.0f, 1.0f });
+	int diffuse[10];
+	std::default_random_engine rng(glfwGetTime());
+	std::uniform_real_distribution<float> range(0.0f, 1.0f);
+	for (int i = 0; i < sizeof(diffuse) / sizeof(diffuse[0]); ++i) {
+		diffuse[i] = world.addMaterial({{ range(rng) * 0.7f, range(rng) * 0.7f, range(rng) * 0.7f }, 0.0f, 1.0f, 1.0f});
+	}
+
+	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 0);
+	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 1);
+	world.addSphere({ 50.0f, 40.0f, 160.0f }, 40.0f, 1);
+
+	for (int i = 0; i < 5; ++i) {
+		float rad = range(rng) * 9.0f + 1.0f;
+		world.addSphere({range(rng) * 200.0f, rad, range(rng) * 200.0f}, rad, (int)(range(rng)*13));
+	}
+
+	// Floor
+	float floorrad = 100000.0f;
+	world.addSphere({ 0.0f, -floorrad, 0.0f }, floorrad, floormat);
 }
 
 int main(void) {
@@ -443,23 +466,28 @@ int main(void) {
 	config.height = WINDOW_HEIGHT;
 	config.bounces = 1;
 
-	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
-	int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
-	int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.3f });
+	//int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
+	//int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
+	//int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.3f });
 
-	Model testModel;
-	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
+	//Model testModel;
+	//testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
+
+	//// Add spheres to world
+	//int sphere1 = world.addSphere({ -20.0f, -5.0f, 50.0f }, 10.0f, material);
+	//world.addSphere({ 20.0f, 5.0f, 50.0f }, 10.0f, material);
+
+	scene1();
 
 	world.create();
-	// Add spheres to world
-	int sphere1 = world.addSphere({ -20.0f, -5.0f, 50.0f }, 10.0f, material);
-	world.addSphere({ 20.0f, 5.0f, 50.0f }, 10.0f, material);
-	world.update();
 
 	rarkernel.setWorldPtr(&world);
 	rarkernel.setPrimaryConfig(&config);
 	rarkernel.setVertexBuffer(world.getVertexBufferPtr());
 	rarkernel.setMaterialBuffer(world.getMaterialBufferPtr());
+	rarkernel.setSphereBuffer(world.getSphereBufferPtr());
+	rarkernel.setTriangleBuffer(world.getTriangleBufferPtr());
+	rarkernel.setModelBuffer(world.getModelBufferPtr());
 	rarkernel.setTriangleGridBuffer(world.getTriangleGridPtr());
 	rarkernel.setTrianlgeCountGridBuffer(world.getTriangleCountPtr());
 
@@ -472,6 +500,10 @@ int main(void) {
 	resetkernel.setConfig(&config);
 	resetkernel.setConfigBuffer(rarkernel.getConfigBuffer());
 	resetkernel.setRayBuffer(rarkernel.getRayBuffer());
+
+	clearimagekernel.setImage(imagekernel.getImageBufferPtr());
+	clearimagekernel.setImageConfig(imagekernel.getImageConfig());
+	clearimagekernel.setImageConfigBuffer(imagekernel.getImageConfigBufferPtr());
 
 	/*raytracekernel.setPrimaryConfig(&config);
 	raytracekernel.setResolution(IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -512,7 +544,7 @@ int main(void) {
 	double starttime = glfwGetTime();
 	double lastframetime = starttime;
 
-	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL, resetEvent = NULL;
+	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL, resetEvent = NULL, clearimgEvent = NULL;
 	cl_int worldUpdateStatus = -1, rarStatus = -1, imageStatus = -1;
 
 	// Main loop
@@ -531,6 +563,7 @@ int main(void) {
 
 		rarkernel.update();
 
+		//clearimgEvent = clearimagekernel.queue(0, NULL);
 		resetEvent = resetkernel.queue(0, NULL);
 		rarEvent = rarkernel.queue(1, &resetEvent);
 		imageEvent = imagekernel.queue(1, &rarEvent);

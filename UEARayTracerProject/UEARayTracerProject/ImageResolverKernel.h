@@ -43,6 +43,10 @@ public:
 
 	inline void setRayConfig(cl_mem* ptr) { rayConfig = ptr; }
 
+	inline ImageConfig* getImageConfig() { return &config; }
+	inline cl_mem* getImageConfigBufferPtr() { return &configBuffer; }
+	inline cl_mem* getImageBufferPtr() { return &outputImageBuffer; }
+
 	virtual void create() override;
 
 	virtual cl_event update() override;

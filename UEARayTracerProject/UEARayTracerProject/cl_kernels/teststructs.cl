@@ -16,9 +16,6 @@ void setModelFields(__constant Model* in, __global Model* out){
 }
 
 void setWorldFields(__constant World* in, __global World* out){
-    out->spheres[MAX_SPHERES-1] = in->spheres[MAX_SPHERES-1];
-    out->triangles[MAX_TRIANGLES-1] = in->triangles[MAX_TRIANGLES-1];
-    out->models[MAX_MODELS-1] = in->models[MAX_MODELS-1];
     out->numSpheres = in->numSpheres;
     out->numTriangles = in->numTriangles;
     out->numModels = in->numModels;

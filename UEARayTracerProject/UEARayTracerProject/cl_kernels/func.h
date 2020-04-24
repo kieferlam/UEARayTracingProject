@@ -27,24 +27,32 @@ void generateEyeRay(__global Ray* output, __constant RayConfig* config, int x, i
     output->direction = normalize(output->origin - config->camera);
 }
 
+float logbase(float base, float num){
+    return log(num) / log(base);
+}
+
 int rar_getNumRays(int bounces){
-    return (int)pow(2, (float)bounces + 1) - 1;
+    return (int)pow(NUM_RAY_CHILDREN, (float)bounces + 1) - NUM_RAY_CHILDREN + 1;
 }
 
 int rar_getParentIndex(int index){
-    return (index-1) / 2;
+    return (index-1) / NUM_RAY_CHILDREN;
 }
 
 int rar_getReflectChild(int index){
-    return 2*index + 1;
+    return NUM_RAY_CHILDREN*index + REFLECT_TYPE;
 }
 
 int rar_getRefractChild(int index){
-    return 2*index + 2;
+    return NUM_RAY_CHILDREN*index + REFRACT_TYPE;
+}
+
+int rar_getShadowChild(int index){
+    return NUM_RAY_CHILDREN*index + SHADOW_TYPE;
 }
 
 int rar_getBounceNumber(int index){
-    return (int)(floor(log2((float)index + 1)));
+    return (int)(floor(logbase(NUM_RAY_CHILDREN, index + (NUM_RAY_CHILDREN-1))));
 }
 
 void getReflectDirection(__global float3* direction_out, float3 direction_in, float3 normal){
@@ -79,22 +87,26 @@ float project(const float3 planeNormal, const float3 point){
     return dot(planeNormal, point);
 }
 
-float3 dda_getStep(const float3 cellSize, const float3 direction){
-    return fabs(cellSize / direction);
+float3 dda_getStep(const float3 cellSize, const float3 direction, const float3 stepPolarity){
+    float3 invdir = 1.0f / direction;
+    if(direction.x == 0.0f) invdir.x = 0.0f;
+    if(direction.y == 0.0f) invdir.y = 0.0f;
+    if(direction.z == 0.0f) invdir.z = 0.0f;
+    return stepPolarity * cellSize * invdir;
 }
 
-float3 dda_getInitialT(const float3 cellSize, const Ray* ray, const float3 gridmin){
-    float3 Ogrid = ray->origin - gridmin;
+float3 dda_getInitialT(const Ray* ray, const float boundT, const float3 gridmin, const float3 cellSize){
+    float3 Ogrid = ray->origin + ray->direction * boundT - gridmin;
     float3 Ocell = Ogrid / cellSize;
     return (floor(Ocell) * cellSize - Ogrid) / ray->direction;
 }
 
-int3 dda_getCellOrigin(const float3 rayOrigin, const float3 gridmin, const float3 cellSize){
-    float3 cellO = (rayOrigin - gridmin) / cellSize;
+int3 dda_getCellOrigin(const float3 startPos, const float3 gridmin, const float3 cellSize){
+    float3 cellO = (startPos - gridmin) / cellSize;
     return (int3)(
-        (int) cellO.x,
-        (int) cellO.y,
-        (int) cellO.z
+        (int) clamp(floor(cellO.x), 0.0f, (float)GRID_CELL_ROW_COUNT-1),
+        (int) clamp(floor(cellO.y), 0.0f, (float)GRID_CELL_ROW_COUNT-1),
+        (int) clamp(floor(cellO.z), 0.0f, (float)GRID_CELL_ROW_COUNT-1)
     );
 }
 
@@ -183,154 +195,61 @@ bool triangle_intersect(const Ray* ray, __constant Triangle* const_triangle, __c
     return true;
 }
 
-// bool model_intersect(__constant World* world, __constant float3* vertices, const Ray* ray, uchar modelIndex, float* closest_T, int* closest_I){
-//     __constant Model* model = world->models + modelIndex;
-
-//     // Step through model grid
-//     float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
-//     float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
-//     float3 griddim = gridmax - gridmin;
-    
-//     float3 cellSize = (griddim) / GRID_CELL_ROW_COUNT;
-//     float3 deltaT, nextCrossingT;
-//     float3 rayOGrid = ray->origin - gridmin;
-//     float3 t;
-
-//     if(ray->direction.x < 0){
-//         deltaT.x = -GRID_CELL_ROW_COUNT / ray->direction.x;
-//         t.x = (floor(rayOGrid.x / cellSize.x) * cellSize.x - rayOGrid.x) / ray->direction.x;
-//     }else{
-//         deltaT.x = GRID_CELL_ROW_COUNT / ray->direction.x;
-//         t.x = ((floor(rayOGrid.x / cellSize.x) + 1) * cellSize.x - rayOGrid.x) / ray->direction.x;
-//     }
-//     if(ray->direction.y < 0){
-//         deltaT.y = -GRID_CELL_ROW_COUNT / ray->direction.y;
-//         t.y = (floor(rayOGrid.y / cellSize.y) * cellSize.y - rayOGrid.y) / ray->direction.y;
-//     }else{
-//         deltaT.y = GRID_CELL_ROW_COUNT / ray->direction.y;
-//         t.y = ((floor(rayOGrid.y / cellSize.y) + 1) * cellSize.y - rayOGrid.y) / ray->direction.y;
-//     }
-//     if(ray->direction.z < 0){
-//         deltaT.z = -GRID_CELL_ROW_COUNT / ray->direction.z;
-//         t.z = (floor(rayOGrid.z / cellSize.z) * cellSize.z - rayOGrid.z) / ray->direction.z;
-//     }else{
-//         deltaT.z = GRID_CELL_ROW_COUNT / ray->direction.z;
-//         t.z = ((floor(rayOGrid.z / cellSize.z) + 1) * cellSize.z - rayOGrid.z) / ray->direction.z;
-//     }
-
-//     float T = 0.0f;
-//     float tNextCrossing = 0.0f;
-//     int3 cellIndex = {rayOGrid.x / cellSize.x, rayOGrid.y / cellSize.y, rayOGrid.z / cellSize.z};
-
-//     while(true){
-//         if(t.x < t.y){
-//             if(t.x < t.z){
-//                 T = t.x;
-//                 t.x += deltaT.x;
-//                 if(ray->direction.x < 0) {
-//                     cellIndex.x -= 1;
-//                 }else{
-//                     cellIndex.x += 1;
-//                 }
-//             }else{
-//                 T = t.z;
-//                 t.z += deltaT.z;
-//                 if(ray->direction.z < 0) {
-//                     cellIndex.z -= 1;
-//                 }else{
-//                     cellIndex.z += 1;
-//                 }
-//             }
-//         }else{
-//             if(t.y < t.z){
-//                 T = t.y;
-//                 t.y += deltaT.y;
-//                 if(ray->direction.y < 0) {
-//                     cellIndex.y -= 1;
-//                 }else{
-//                     cellIndex.y += 1;
-//                 }
-//             }else{
-//                 T = t.z;
-//                 t.z += deltaT.z;
-//                 if(ray->direction.z < 0) {
-//                     cellIndex.z -= 1;
-//                 }else{
-//                     cellIndex.z += 1;
-//                 }
-//             }
-//         }
-
-//         if(cellIndex.x < 0 || cellIndex.y < 0 || cellIndex.z < 0 ||
-//         cellIndex.x > GRID_CELL_ROW_COUNT - 1 || cellIndex.y > GRID_CELL_ROW_COUNT - 1 || cellIndex.z > GRID_CELL_ROW_COUNT - 1){
-//             break;
-//         } 
-//     }
-// }
-
 bool model_intersect(
-    __constant World* world, 
-    __constant float3* vertices, 
-    TRIANGLE_GRID grid, 
-    __constant unsigned int* triangleCountGrid, 
+    WorldPack pack,
     const Ray* ray, 
     uchar modelIndex, 
     float* closest_T, 
     int* closest_I){
+    
+    float T = *closest_T;
+    const Ray r = *ray;
 
-    __constant Model* model = world->models + modelIndex;
+    __constant Model* model = pack.models + modelIndex;
 
     // Step through model grid
     float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
     float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
-    union{
-        float3 vector;
-        float array[3];
-    } cellSize;
-    cellSize.vector = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
 
-    union{
-        float array[4];
-        float3 vector;
-    } dtCell;
-    dtCell.vector = dda_getStep(cellSize.vector, ray->direction);
-    union{
-        int array[3];
-        int3 vector;
-    } cellindex;
-    cellindex.vector = dda_getCellOrigin(ray->origin, gridmin, cellSize.vector);
+    float3 cellSize = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
+    float3 rayStart = (r.origin + r.direction * T * (1.0f + EPSILON));
+    float3 dda_origin = rayStart - gridmin;
 
-    union{
-        float array[4];
-        float3 vector;
-    } stepPolarity;
-    stepPolarity.vector = dda_getCellStepPolarity(ray->direction);
-    
-    union{
-        float3 vector;
-        float array[3];
-    } cumT;
-    cumT.vector = dda_getInitialT(cellSize.vector, ray, gridmin);
+    float3 step = {
+        r.direction.x < 0.0f ? -1.0f : 1.0f,
+        r.direction.y < 0.0f ? -1.0f : 1.0f,
+        r.direction.z < 0.0f ? -1.0f : 1.0f
+    };
+    if(r.direction.x == 0.0f) step.x = 0.0f;
+    if(r.direction.y == 0.0f) step.y = 0.0f;
+    if(r.direction.z == 0.0f) step.z = 0.0f;
+
+    float3 invdir = 1.0f / r.direction;
+
+    float3 deltaT = fabs(cellSize * invdir);
+
+    int3 currentV = convert_int3(floor(dda_origin / cellSize));
+    float3 Tv = r.direction / cellSize;
+    int max_step = GRID_CELL_ROW_COUNT * 2;
 
     while(
-        ((stepPolarity.vector.x < 0.0f && cellindex.vector.x >= 0) || (stepPolarity.vector.x >= 0.0f && cellindex.vector.x < GRID_CELL_ROW_COUNT)) &&
-        ((stepPolarity.vector.y < 0.0f && cellindex.vector.y >= 0) || (stepPolarity.vector.y >= 0.0f && cellindex.vector.y < GRID_CELL_ROW_COUNT)) &&
-        ((stepPolarity.vector.z < 0.0f && cellindex.vector.z >= 0) || (stepPolarity.vector.z >= 0.0f && cellindex.vector.z < GRID_CELL_ROW_COUNT))
+        currentV.x >= 0 && currentV.x < GRID_CELL_ROW_COUNT &&
+        currentV.y >= 0 && currentV.y < GRID_CELL_ROW_COUNT &&
+        currentV.z >= 0 && currentV.z < GRID_CELL_ROW_COUNT &&
+        max_step > 0
     ){
+        max_step--;
+        uint celloffset = getTriangleGridOffset(currentV);
 
-        // Intersect test with cell's triangles
-        // Triangle intersections
         bool hasIntersect = false;
-        uint celloffset = getTriangleGridOffset(cellindex.vector);
         float closest_triangle_T = MAX_VALUE;
-
-        for(int i = 0; i < triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
-            __constant Triangle* triangle = world->triangles + (grid[model->triangleGridOffset + celloffset + i]);
+        for(int i = 0; i < pack.triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
+            __constant Triangle* triangle = pack.triangles + pack.grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
 
             float3 intersect;
             float T;
 
-            if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+            if(!triangle_intersect(ray, triangle, pack.vertices, &intersect, &T)) continue;
 
             if(T < closest_triangle_T){
                 closest_triangle_T = T;
@@ -342,23 +261,134 @@ bool model_intersect(
         }
         if(hasIntersect) return true;
 
-        // Find lowest T value so we know which dimension to increment
-        int lowI = 0;
-        float lowT = cumT.array[0];
-        for(int i = 1; i < 3; ++i){
-            if(cumT.array[i] < lowT){
-                lowT = cumT.array[i];
-                lowI = i;
-            }
-        }
+        float3 incr = {
+            (Tv.x <= Tv.y) && (Tv.x <= Tv.z),
+            (Tv.y <= Tv.x) && (Tv.y <= Tv.z),
+            (Tv.z <= Tv.x) && (Tv.z <= Tv.y),
+        };
 
-        cumT.array[lowI] += dtCell.array[lowI];
 
-        cellindex.array[lowI] += stepPolarity.array[lowI] * 1.0f;
+        Tv += incr * deltaT;
+        currentV += convert_int3(incr * step);
     }
 
     return false;
 }
+
+// bool model_intersect_temp(
+//     __constant World* world, 
+//     __constant float3* vertices, 
+//     TRIANGLE_GRID grid, 
+//     TRIANGLE_GRID_COUNT triangleCountGrid, 
+//     const Ray* ray, 
+//     uchar modelIndex, 
+//     float* closest_T, 
+//     int* closest_I){
+
+//     __constant Model* model = world->models + modelIndex;
+
+//     // Step through model grid
+//     float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
+//     float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
+
+//     float3 cellSize = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
+//     float3 rayStart = (ray->origin + ray->direction * *closest_T);
+//     float3 dda_origin = rayStart - gridmin;
+
+//     union{
+//         float array[4];
+//         float3 vector;
+//     } stepPolarity;
+//     stepPolarity.vector = dda_getCellStepPolarity(ray->direction);
+
+//     union{
+//         float array[4];
+//         float3 vector;
+//     } dtCell;
+//     dtCell.vector = dda_getStep(cellSize, ray->direction, stepPolarity.vector);
+//     union{
+//         int array[3];
+//         int3 vector;
+//     } cellindex;
+//     cellindex.vector = dda_getCellOrigin(rayStart, gridmin, cellSize);
+    
+//     union{
+//         float3 vector;
+//         float array[3];
+//     } cumT;
+//     cumT.vector = dda_getInitialT(ray, *closest_T - 1.0f, gridmin, cellSize);
+
+//     // for(int z = 0; z < GRID_CELL_ROW_COUNT; ++z){
+//     //     uint celloffset = getTriangleGridOffset((int3)(1, 2, z));
+
+//     //     if(debug_isCenterPixel()) printf("%d", triangleCountGrid[model->triangleCountOffset + celloffset]);
+//     //     for(int i = 0; i < triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
+//     //         __constant Triangle* triangle = world->triangles + grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
+
+//     //         float3 intersect;
+//     //         float T;
+
+//     //         if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+//     //             *closest_T = T;
+//     //             *closest_I = i;
+//     //             return true;
+//     //     }
+//     // }
+//     // return false;
+
+//     int max_step = GRID_CELL_ROW_COUNT * 2;
+//     while(
+//         cellindex.vector.x >= 0 && cellindex.vector.x < GRID_CELL_ROW_COUNT &&
+//         cellindex.vector.y >= 0 && cellindex.vector.y < GRID_CELL_ROW_COUNT &&
+//         cellindex.vector.z >= 0 && cellindex.vector.z < GRID_CELL_ROW_COUNT &&
+//         max_step > 0
+//     ){
+//         max_step--;
+
+//         // Intersect test with cell's triangles
+//         // Triangle intersections
+//         bool hasIntersect = false;
+//         uint celloffset = getTriangleGridOffset(cellindex.vector);
+//         float closest_triangle_T = MAX_VALUE;
+
+//         if(debug_isCenterPixel()) printf("%d, %d, %d, %d, %f, %f, %f", max_step, cellindex.vector.x, cellindex.vector.y, cellindex.vector.z, cumT.vector.x, cumT.vector.y, cumT.vector.z);
+
+//         for(int i = 0; i < triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
+//             __constant Triangle* triangle = world->triangles + grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
+
+//             float3 intersect;
+//             float T;
+
+//             if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
+
+//             if(T < closest_triangle_T){
+//                 closest_triangle_T = T;
+//                 *closest_T = T;
+//                 *closest_I = i;
+//             }
+
+//             hasIntersect = true;
+//         }
+//         if(hasIntersect) return true;
+
+//         // Find lowest T value so we know which dimension to increment
+//         int lowI = 0;
+//         float lowT = cumT.array[0];
+//         for(int i = 1; i < 3; ++i){
+//             if(cumT.array[i] < lowT){
+//                 lowT = cumT.array[i];
+//                 lowI = i;
+//             }
+//         }
+
+//         cumT.array[lowI] += dtCell.array[lowI];
+
+//         cellindex.array[lowI] += stepPolarity.array[lowI] * 1.0f;
+//     }
+
+//     return false;
+// }
 
 bool bvh_plane_intersect(__constant Model* model, float* planeDotOrigin, float* planeDotDirection, float* tNear, float* tFar, uint* planeIndex){
     for(uint plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
@@ -423,3 +453,13 @@ float triangle_intersect_T(Ray* ray, Triangle* triangle, __constant float3* vert
     float t = (dot(triangle->normal, ray->origin) + d) / dot(triangle->normal, ray->direction);
     return t;
 }
+
+// Image resolve
+
+// float3 phong(__constant Material* material){
+
+// }
+
+// float3 calc_emission(){
+
+// }

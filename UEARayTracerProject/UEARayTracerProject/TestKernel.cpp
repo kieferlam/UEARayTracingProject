@@ -76,18 +76,6 @@ cl_event TestKernel::queue(cl_uint num_events, cl_event* wait_events)
 
 	// World struct
 
-	if (in_world.spheres[MAX_SPHERES - 1].radius != out_world.spheres[MAX_SPHERES - 1].radius) {
-		log << "Mismatch in world spheres \tExpected\t" << in_world.spheres[MAX_SPHERES - 1].radius << "\tgot\t" << out_world.spheres[MAX_SPHERES - 1].radius << std::endl;
-	}
-
-	if (in_world.triangles[MAX_TRIANGLES - 1].face.x != out_world.triangles[MAX_TRIANGLES - 1].face.x) {
-		log << "Mismatch in world triangles \tExpected\t" << in_world.triangles[MAX_TRIANGLES - 1].face.x << "\tgot\t" << out_world.triangles[MAX_TRIANGLES - 1].face.x << std::endl;
-	}
-
-	if (in_world.models[MAX_MODELS - 1].numTriangles != out_world.models[MAX_MODELS - 1].numTriangles) {
-		log << "Mismatch in world models \tExpected\t" << in_world.models[MAX_MODELS - 1].numTriangles << "\tgot\t" << out_world.models[MAX_MODELS - 1].numTriangles << std::endl;
-	}
-
 	if (in_world.numSpheres != out_world.numSpheres) {
 		log << "Mismatch in world numSpheres \tExpected\t" << in_world.numSpheres << "\tgot\t" << out_world.numSpheres << std::endl;
 	}
