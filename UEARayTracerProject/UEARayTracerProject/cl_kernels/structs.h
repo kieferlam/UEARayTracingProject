@@ -56,12 +56,14 @@ typedef struct __attribute__ ((aligned(16))){
 } Model;
 
 typedef struct __attribute__ ((aligned(16))) {
-	uint numSpheres;
+    uint numRays;
     uint pad1[3];
-    uint numTriangles;
+	uint numSpheres;
     uint pad2[3];
-    uint numModels;
+    uint numTriangles;
     uint pad3[3];
+    uint numModels;
+    uint pad4[3];
 } World;
 
 typedef struct TraceResult TraceResult;
@@ -79,7 +81,7 @@ struct __attribute__ ((aligned(16))) TraceResult{
     uint bounce;
     int hasIntersect;
     int hasTraced;
-    bool pad2[2];
+    int pad2[2];
 };
 
 typedef struct __attribute__ ((aligned(16))) {

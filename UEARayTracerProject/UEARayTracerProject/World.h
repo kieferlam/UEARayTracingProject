@@ -14,6 +14,7 @@
 #define GRID_MAX_TRIANGLES_PER_CELL (64) // MAKE SURE THIS IS A MULTIPLE OF 16
 
 inline constexpr int static_pow(const int base, const int exp) { return (exp == 0) ? 1 : base * static_pow(base, exp-1); }
+inline constexpr int static_numrays(const int numchildren, const int bounce) { return (1 - static_pow(numchildren, bounce + 1)) / (1-numchildren); }
 
 constexpr int GRID_CELL_ROW_COUNT = static_pow(2, GRID_CELL_DEPTH);
 constexpr int GRID_CELL_COUNT = CUBE(GRID_CELL_ROW_COUNT);
@@ -63,12 +64,14 @@ __declspec (align(16)) struct ModelStruct {
 };
 
 __declspec (align(16)) struct WorldStruct {
-	cl_uint numSpheres;
+	cl_uint numRays;
 	cl_uint pad1[3];
-	cl_uint numTriangles;
+	cl_uint numSpheres;
 	cl_uint pad2[3];
-	cl_uint numModels;
+	cl_uint numTriangles;
 	cl_uint pad3[3];
+	cl_uint numModels;
+	cl_uint pad4[3];
 };
 
 class World {

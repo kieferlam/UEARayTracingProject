@@ -32,7 +32,11 @@ float logbase(float base, float num){
 }
 
 int rar_getNumRays(int bounces){
-    return (int)pow(NUM_RAY_CHILDREN, (float)bounces + 1) - NUM_RAY_CHILDREN + 1;
+    return (int)((1.0f-pow(NUM_RAY_CHILDREN, (float)bounces+1)) / (1.0f-NUM_RAY_CHILDREN));
+}
+
+int rar_getBounce(int index){
+    return (int)ceil(logbase(NUM_RAY_CHILDREN, 1 + (NUM_RAY_CHILDREN-1)*index) - 1);
 }
 
 int rar_getParentIndex(int index){
@@ -49,10 +53,6 @@ int rar_getRefractChild(int index){
 
 int rar_getShadowChild(int index){
     return NUM_RAY_CHILDREN*index + SHADOW_TYPE;
-}
-
-int rar_getBounceNumber(int index){
-    return (int)(floor(logbase(NUM_RAY_CHILDREN, index + (NUM_RAY_CHILDREN-1))));
 }
 
 void getReflectDirection(__global float3* direction_out, float3 direction_in, float3 normal){
@@ -126,7 +126,7 @@ float3 sphere_normal(__constant Sphere* sphere, float3 surface){
     return normalize(surface - sphere->position);
 }
 
-bool sphere_intersect(Ray* ray, __constant Sphere* sphere, SphereIntersect* result){
+bool sphere_intersect(const Ray* ray, __constant Sphere* sphere, SphereIntersect* result){
     float3 vec_raysphere = ray->origin - sphere->position; // This line should be omitted in the future for performance optimizations
 
     // at^2 + bt + c = 0
@@ -444,7 +444,7 @@ float3 refract(float3 in, float3 normal, float fromIOR, float toIOR){
     }
     float n = etaI / etaT;
     float k = 1.0f - SQ(etaT) * (1.0f - SQ(cosI));
-    return k < 0.0f ? N : n * in + (n * cosI - sqrt(k)) * N;
+    return k < 0.0f ? (float3)(0.0f, 0.0f, 0.0f) : n * in + (n * cosI - sqrt(k)) * N;
 }
 
 float triangle_intersect_T(Ray* ray, Triangle* triangle, __constant float3* vertices){

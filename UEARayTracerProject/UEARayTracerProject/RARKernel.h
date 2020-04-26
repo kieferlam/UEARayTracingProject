@@ -39,9 +39,9 @@ __declspec (align(16)) struct TraceResult {
 	cl_uint objectIndex;
 	cl_uint material;
 	cl_uint bounce;
-	cl_bool hasIntersect;
-	cl_bool hasTraced;
-	cl_bool pad2[14];
+	cl_int hasIntersect;
+	cl_int hasTraced;
+	cl_int pad2[2];
 };
 
 class RARKernel : public CLKernel {

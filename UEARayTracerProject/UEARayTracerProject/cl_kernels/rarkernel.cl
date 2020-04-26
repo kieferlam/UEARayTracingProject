@@ -157,13 +157,6 @@ __kernel void RARTrace(
     TRIANGLE_GRID triangleGrid,
     TRIANGLE_GRID_COUNT triangleCountGrid
 ){
-    // if(debug_isCenterPixel()){
-    //     __constant Sphere s = {{0, 10, 0}, 3, 0};
-    //     Ray r = {{2, 0, 0}, {0, 1, 0}};
-    //     TraceResult result;
-    //     sphere_intersect(&r, &s, &result);
-    //     printf("%f, %f, %f", result.intersect.x, result.intersect.y, result.intersect.z);
-    // }
 
     WorldPack pack = {world, vertices, materials, spheres, triangles, models, triangleGrid, triangleCountGrid};
 
@@ -173,6 +166,7 @@ __kernel void RARTrace(
 
     int offset = (idx + (int)(idy * config->width)) * rar_getNumRays(config->bounces);
     __global TraceResult* baseResult = results + offset;
+    baseResult->bounce = 0;
     
     generateEyeRay(&baseResult->ray, config, idx, idy);
 
@@ -187,7 +181,7 @@ __kernel void RARTrace(
         Ray r = result->ray;
         trace(config, pack, &r, result);
 
-        if(rar_getBounceNumber(offsets[i]) >= config->bounces) continue;
+        if(result->bounce >= config->bounces) continue;
         
         // If intersect, add more rays
         if(result->hasIntersect){
@@ -203,6 +197,7 @@ __kernel void RARTrace(
                 // Create ray
                 baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
                 getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal);
+                baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
             }
             
             // Add refractive ray
@@ -231,9 +226,11 @@ __kernel void RARTrace(
                     // Calculate exit ray direction
                     float3 exit_normal = normalize(baseResult[offsets[queueTail]].ray.origin - sphere->position);
                     getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, internal_direction, -exit_normal, material->refractiveIndex, AIR_REFRACTIVE_INDEX);
+                    baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
                 }else{
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
-                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, AIR_REFRACTIVE_INDEX);
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, 1.04f);
+                    baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
                 }
             }
 
@@ -245,6 +242,7 @@ __kernel void RARTrace(
                 // Create shadow ray
                 baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
                 baseResult[offsets[queueTail]].ray.direction = -daylight_direction; // Shadow ray should be cast towards light source
+                baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
             }
         }
     }

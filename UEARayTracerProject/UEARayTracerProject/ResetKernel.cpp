@@ -27,7 +27,7 @@ cl_event ResetKernel::update()
 
 cl_event ResetKernel::queue(cl_uint num_events, cl_event* wait_events)
 {
-	unsigned int numrays = pow(NUM_RAY_CHILDREN, config->bounces + 1) - 1;
+	const unsigned int numrays = static_numrays(NUM_RAY_CHILDREN, config->bounces);
 	const size_t workgroupOffset[1] = { 0};
 	const size_t workgroupSize[1] = { config->width * config->height * numrays };
 	cl_int err = clEnqueueNDRangeKernel(cl::queue, getKernel(), 1, workgroupOffset, workgroupSize, NULL, num_events, wait_events, &queueEvent);

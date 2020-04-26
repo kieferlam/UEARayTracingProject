@@ -14,7 +14,7 @@ void RARKernel::read() {
 
 void RARKernel::create() {
 
-	unsigned int numrays = pow(NUM_RAY_CHILDREN, config->bounces + 1) - 1;
+	const unsigned int numrays = static_numrays(NUM_RAY_CHILDREN, config->bounces);
 
 	// Assume kernel object has been created
 

@@ -14,7 +14,7 @@
 #define MAX_PLATFORMS (4)
 #define PLATFORM_INFO_CHAR_LENGTH (256)
 
-#define BUILD_OPTIONS ("-cl-std=CL2.1")
+#define BUILD_OPTIONS ("-cl-std=CL2.0")
 
 namespace cl {
 	struct device_info_struct {

@@ -412,7 +412,7 @@ void runKernelTest(ModelStruct* mstruct, WorldStruct* wstruct) {
 void scene1() {
 	int mirror = world.addMaterial({ {1.0f, 1.0f, 1.0f}, 1.0f, 1.0f, 1.0f });
 	int hollowglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
-	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.57f });
+	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.517f });
 	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, 0.0f, 1.0f, 1.0f });
 	int diffuse[10];
 	std::default_random_engine rng(rand());
@@ -421,8 +421,8 @@ void scene1() {
 		diffuse[i] = world.addMaterial({{ range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f }, 0.0f, 1.0f, 1.0f});
 	}
 
-	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 0);
-	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 1);
+	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 2);
+	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 2);
 	world.addSphere({ 50.0f, 40.0f, 160.0f }, 40.0f, 2);
 
 	for (int i = 0; i < 5; ++i) {
