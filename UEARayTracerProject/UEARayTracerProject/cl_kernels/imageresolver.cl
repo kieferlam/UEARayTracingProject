@@ -7,17 +7,15 @@
 
 typedef struct RayTraceNode RayTraceNode;
 struct __attribute__ ((aligned(16))) RayTraceNode{
-    float3 reflectOutput;
-    float3 refractOutput;
-    float3 output;
-    uint reflectChild;
-    uint refractChild;
-    uint shadowChild;
-    uint offset;
+    int reflectIndex;
+    int refractIndex;
+    int reflectChild;
+    int refractChild;
+    uint index;
     uint visit;
     uint type; // 0 = root; 1 = reflection; 2 = refraction; 3 = shadow;
     uint processed;
-    uint pad1;
+    int pad1;
 };
 
 float3 skybox_cubemap(__constant ImageConfig* config, SKYBOX skybox_data, float3 dir){
@@ -112,15 +110,15 @@ float3 skybox_cubemap(__constant ImageConfig* config, SKYBOX skybox_data, float3
     return col;
 }
 
-uint pushStack(RayTraceNode* stack, int* stackHead, uint offset, uint type){
+int pushStack(RayTraceNode* stack, int* stackHead, uint index, uint type){
     int readhead = *stackHead;
     if(readhead >= MAX_RESULT_TREE_STACK) return 0;
     RayTraceNode* next = stack + readhead;
+    next->reflectIndex = -1;
+    next->refractIndex = -1;
     next->reflectChild = 0;
     next->refractChild = 0;
-    next->shadowChild = 0;
-    next->output = (float3)(0.0f, 0.0f, 0.0f);
-    next->offset = offset;
+    next->index = index;
     next->visit = 0;
     next->type = type;
     next->processed = false;
@@ -144,7 +142,9 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
     }else{
         // Stack for ray bounce processing
         RayTraceNode treeStack[MAX_RESULT_TREE_STACK];
+        float3 outputStack[MAX_RESULT_TREE_STACK];
         int stackHead = 0;
+        int iterHead = 0;
 
         // Copy results to local memory
         __private TraceResult localResults[MAX_RESULT_TREE_STACK];
@@ -155,79 +155,146 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
         // Add ray 
         pushStack(treeStack, &stackHead, 0, 0);
 
-        // Add rays and their bounces to stack
-        while(stackHead > 0 && stackHead < MAX_RESULT_TREE_STACK - NUM_RAY_CHILDREN){
+        // Adding all rays to stack
+        while(iterHead < stackHead && iterHead >= 0){
             /**
             Conditions:
             Visit 1: Add reflect node
             Visit 2: Add refract node
-            Visit 3: Add shadow node
             Visit 4: Process current node
             */
 
-            RayTraceNode* currentNode = treeStack + stackHead - 1;
+            RayTraceNode* currentNode = treeStack + iterHead;
             currentNode->visit++;
-            uint reflectChildIndex = rar_getReflectChild(currentNode->offset);
-            uint refractChildIndex = rar_getRefractChild(currentNode->offset);
 
-            // These branches queue the children rays for processing
-            // Child rays need to be processed first before calculating the current rays colour output
             if(currentNode->visit == REFLECT_TYPE){
+                uint reflectChildIndex = rar_getReflectChild(currentNode->index);
                 if(localResults[reflectChildIndex].hasTraced){ // Reflect child node
                     // Add reflect trace to stack
-                    currentNode->reflectChild = pushStack(treeStack, &stackHead, reflectChildIndex, REFLECT_TYPE);
+                    currentNode->reflectChild = reflectChildIndex;
+                    currentNode->reflectIndex = pushStack(treeStack, &stackHead, reflectChildIndex, REFLECT_TYPE);
+                    iterHead++;
                 }
             }else if(currentNode->visit == REFRACT_TYPE){
+                uint refractChildIndex = rar_getRefractChild(currentNode->index);
                 if(localResults[refractChildIndex].hasTraced){
                     // Add refract trace to stack
-                    currentNode->refractChild = pushStack(treeStack, &stackHead, refractChildIndex, REFRACT_TYPE);
+                    currentNode->refractChild = refractChildIndex;
+                    currentNode->refractIndex = pushStack(treeStack, &stackHead, refractChildIndex, REFRACT_TYPE);
+                    iterHead++;
                 }
-            }else{ 
-
-                // This branch is where the the actual colour processing occurs
-                TraceResult* result = localResults + currentNode->offset;
-                if(result->hasIntersect){
-                    
-                    Material objectMaterial = materials[result->material];
-                    float kr = fresnel(result->ray.direction, result->normal, AIR_REFRACTIVE_INDEX, objectMaterial.refractiveIndex);
-
-                    float daylight_cosine = 1.0f - max(dot(result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
-                    uint shadowChildIndex = rar_getShadowChild(currentNode->offset);
-                    TraceResult* shadowResult = localResults + shadowChildIndex;
-
-                    // Calculate emission
-                    float3 transmission = objectMaterial.diffuse * daylight_cosine;
-                    if(treeStack[currentNode->refractChild].processed) transmission = mix(treeStack[currentNode->refractChild].output, transmission, objectMaterial.opacity);
-
-                    // Calculate shadows
-                    if(shadowResult->hasTraced && shadowResult->hasIntersect){
-                        transmission *= 1.0f - (DAYLIGHT_SHADOW_STRENGTH * materials[shadowResult->material].opacity);
-                    }
-
-                    // Calculate reflection
-                    float3 reflection = transmission;
-                    if(treeStack[currentNode->reflectChild].processed) reflection = treeStack[currentNode->reflectChild].output * daylight_cosine;
-                    
-                    // Transform kr based on opacity
-                    // kr = mix(kr, 1.0f - kr, objectMaterial.opacity);
-
-                    currentNode->output = transmission * (1.0f - kr) + reflection * kr;
-                }else{
-                    float3 sky = skybox_cubemap(imageConfig, skybox, result->ray.direction);
-                    currentNode->output = sky;
-                }
-
-                if(currentNode->type == REFLECT_TYPE){
-                    currentNode->output = (float3)(1.0f, 0.0f, 0.0f);
-                }
-
-                currentNode->processed = true;
-                stackHead--;
+            }else{
+                iterHead--;
             }
         }
 
-        final = treeStack->output;
-        if(idx == (1280 / 2) + 3 && idy == (720 / 2) - 3) final = (float3)(1.0f, 0.0f, 0.0f);
+        // Iterate through stack (popping, so iterating through the array backwards)
+        while(stackHead >= 0){
+            RayTraceNode* currentNode = treeStack + stackHead;
+            
+            TraceResult* result = localResults + currentNode->index;
+            if(result->hasIntersect){
+                Material objectMaterial = materials[result->material];
+                float kr = fresnel(result->ray.direction, result->normal, AIR_REFRACTIVE_INDEX, objectMaterial.refractiveIndex);
+
+                float daylight_cosine = 1.0f - max(dot(result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
+                uint shadowChildIndex = rar_getShadowChild(currentNode->index);
+                TraceResult* shadowResult = localResults + shadowChildIndex;
+
+                // Calculate emission
+                float3 transmission = objectMaterial.diffuse * daylight_cosine;
+                if(currentNode->refractIndex > -1) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity);
+
+                // Calculate shadows
+                if(shadowResult->hasTraced && shadowResult->hasIntersect){
+                    transmission *= 1.0f - (DAYLIGHT_SHADOW_STRENGTH * materials[shadowResult->material].opacity);
+                }
+
+                // Calculate reflection
+                float3 reflection = transmission;
+                if(currentNode->reflectIndex > -1) reflection = outputStack[currentNode->reflectChild] * daylight_cosine;
+                
+                // Transform kr based on opacity
+                // kr = mix(kr, 1.0f - kr, objectMaterial.opacity);
+
+                outputStack[currentNode->index] = transmission * (1.0f - kr) + reflection * kr;
+            }else{
+                float3 sky = skybox_cubemap(imageConfig, skybox, result->ray.direction);
+                outputStack[currentNode->index] = sky;
+            }
+
+            stackHead--;
+        }
+
+        // Add rays and their bounces to stack
+        // while(stackHead > 0 && stackHead < MAX_RESULT_TREE_STACK - NUM_RAY_CHILDREN){
+        //     /**
+        //     Conditions:
+        //     Visit 1: Add reflect node
+        //     Visit 2: Add refract node
+        //     Visit 4: Process current node
+        //     */
+
+        //     RayTraceNode* currentNode = treeStack + stackHead - 1;
+        //     currentNode->visit++;
+        //     uint reflectChildIndex = rar_getReflectChild(currentNode->index);
+        //     uint refractChildIndex = rar_getRefractChild(currentNode->index);
+
+        //     // These branches queue the children rays for processing
+        //     // Child rays need to be processed first before calculating the current rays colour output
+        //     if(currentNode->visit == REFLECT_TYPE){
+        //         if(localResults[reflectChildIndex].hasTraced){ // Reflect child node
+        //             // Add reflect trace to stack
+        //             currentNode->reflectChild = reflectChildIndex;
+        //             pushStack(treeStack, &stackHead, reflectChildIndex, REFLECT_TYPE);
+        //         }
+        //     }else if(currentNode->visit == REFRACT_TYPE){
+        //         if(localResults[refractChildIndex].hasTraced){
+        //             // Add refract trace to stack
+        //             currentNode->refractChild = refractChildIndex;
+        //             pushStack(treeStack, &stackHead, refractChildIndex, REFRACT_TYPE);
+        //         }
+        //     }else{ 
+
+        //         // This branch is where the the actual colour processing occurs
+        //         TraceResult* result = localResults + currentNode->index;
+        //         if(result->hasIntersect){
+                    
+        //             Material objectMaterial = materials[result->material];
+        //             float kr = fresnel(result->ray.direction, result->normal, AIR_REFRACTIVE_INDEX, objectMaterial.refractiveIndex);
+
+        //             float daylight_cosine = 1.0f - max(dot(result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
+        //             uint shadowChildIndex = rar_getShadowChild(currentNode->index);
+        //             TraceResult* shadowResult = localResults + shadowChildIndex;
+
+        //             // Calculate emission
+        //             float3 transmission = objectMaterial.diffuse * daylight_cosine;
+        //             if(treeStack[currentNode->refractChild].processed) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity);
+
+        //             // Calculate shadows
+        //             if(shadowResult->hasTraced && shadowResult->hasIntersect){
+        //                 transmission *= 1.0f - (DAYLIGHT_SHADOW_STRENGTH * materials[shadowResult->material].opacity);
+        //             }
+
+        //             // Calculate reflection
+        //             float3 reflection = transmission;
+        //             if(treeStack[currentNode->reflectChild].processed) reflection = outputStack[currentNode->reflectChild] * daylight_cosine;
+                    
+        //             // Transform kr based on opacity
+        //             // kr = mix(kr, 1.0f - kr, objectMaterial.opacity);
+
+        //             outputStack[currentNode->index] = transmission * (1.0f - kr) + reflection * kr;
+        //         }else{
+        //             float3 sky = skybox_cubemap(imageConfig, skybox, result->ray.direction);
+        //             outputStack[currentNode->index] = sky;
+        //         }
+
+        //         currentNode->processed = true;
+        //         stackHead--;
+        //     }
+        // }
+
+        final = outputStack[0];
     }
 
     // Write colour

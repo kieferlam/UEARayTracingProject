@@ -435,6 +435,10 @@ void scene1() {
 	world.addSphere({ 0.0f, -floorrad, 0.0f }, floorrad, floormat);
 }
 
+void scene2() {
+
+}
+
 int main(void) {
 
 	if (!initGL()) {
