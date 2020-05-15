@@ -3,9 +3,9 @@ INPUT c:/Program Files/texlive/2019/texmf.cnf
 INPUT c:/Program Files/texlive/2019/texmf-dist/web2c/texmf.cnf
 INPUT c:/Program Files/texlive/2019/texmf-var/web2c/pdftex/pdflatex.fmt
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.tex
-OUTPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.log
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/cmpreport.cls
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/cmpreport.cls
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.log
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/cmpreport.cls
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/cmpreport.cls
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/koma-script/scrartcl.cls
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/koma-script/scrartcl.cls
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/koma-script/scrkbase.sty
@@ -308,9 +308,9 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/base/ifthen.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/base/ifthen.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/subfloat/subfloat.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/subfloat/subfloat.sty
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.aux
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.aux
-OUTPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.aux
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.aux
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.aux
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.aux
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/t1ptm.fd
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/t1ptm.fd
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
@@ -326,14 +326,14 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/oberdiek/refcount.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/oberdiek/refcount.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.out
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.out
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.out
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.out
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
-OUTPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.out
-OUTPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.pdf
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.pdf
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/bookmark/bookmark.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/bookmark/bookmark.sty
 INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/bookmark/bkm-pdftex.def
@@ -349,9 +349,9 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/siunitx/siunitx-abbrevi
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb8t.tfm
-INPUT c:/Program Files/texlive/texmf-local/tex/base/cmpreport/uealogo.png
-INPUT c:/Program Files/texlive/texmf-local/tex/base/cmpreport/uealogo.png
-INPUT c:/Program Files/texlive/texmf-local/tex/base/cmpreport/uealogo.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/uealogo.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/uealogo.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/uealogo.png
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmr8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map
@@ -403,14 +403,17 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmr8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmri8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.toc
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.toc
-OUTPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.toc
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.toc
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.toc
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmro8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmro8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmro8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/helvetic/phvb8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.tfm
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.toc
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.lof
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.lof
+OUTPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.lof
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmss12.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmss9.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmss8.tfm
@@ -418,9 +421,80 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmtt9.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmtt8.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsptm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsptm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmsy10.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/helvetic/phvb8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.tfm
-INPUT d:\Dropbox\University\UEA\CFS Documents\Year 3\Project\Project_root\portfolio\paper/paper.aux
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7m.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/psyro.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmmi10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7t.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7m.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/psyro.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmmi10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7y.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/rsfs/rsfs10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7t.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7v.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7y.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmsy10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/rsfs/rsfs10.tfm
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_hollow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/hard_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/hard_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/hard_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/softish_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/softish_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/softish_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.bbl
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.bbl
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.aux
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.out
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/enc/dvips/base/8r.enc
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/times/utmb8a.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/times/utmr8a.pfb
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/type1/urw/times/utmri8a.pfb

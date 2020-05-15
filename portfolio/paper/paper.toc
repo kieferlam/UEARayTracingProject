@@ -1,25 +1,66 @@
-\contentsline {section}{\numberline {1}Introduction}{5}{section.1}%
-\contentsline {subsection}{\numberline {1.1}Aims and Motivations}{5}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Problems}{5}{subsection.1.2}%
-\contentsline {section}{\numberline {2}Literature Review}{5}{section.2}%
-\contentsline {section}{\numberline {3}Design and Implementation}{5}{section.3}%
-\contentsline {subsection}{\numberline {3.1}OpenCL and OpenGL}{5}{subsection.3.1}%
-\contentsline {subsubsection}{\numberline {3.1.1}Host}{5}{subsubsection.3.1.1}%
-\contentsline {subsubsection}{\numberline {3.1.2}Device}{5}{subsubsection.3.1.2}%
-\contentsline {subsection}{\numberline {3.2}Kernel Structure}{5}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {3.2.1}Ray Trace Kernel}{5}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.2}Image Kernel}{5}{subsubsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.3}Reset Kernel}{5}{subsubsection.3.2.3}%
-\contentsline {subsubsection}{\numberline {3.2.4}Single Independent Kernel}{5}{subsubsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.3}Ray Generation}{5}{subsection.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.1}Primary Rays}{5}{subsubsection.3.3.1}%
-\contentsline {subsubsection}{\numberline {3.3.2}Reflection}{5}{subsubsection.3.3.2}%
-\contentsline {subsubsection}{\numberline {3.3.3}Refraction}{5}{subsubsection.3.3.3}%
-\contentsline {subsection}{\numberline {3.4}Intersection With Objects}{5}{subsection.3.4}%
-\contentsline {subsubsection}{\numberline {3.4.1}Sphere Intersection}{5}{subsubsection.3.4.1}%
-\contentsline {subsubsection}{\numberline {3.4.2}Triangle Intersection}{5}{subsubsection.3.4.2}%
-\contentsline {subsection}{\numberline {3.5}Generating An Image}{5}{subsection.3.5}%
-\contentsline {subsubsection}{\numberline {3.5.1}Phong Model}{5}{subsubsection.3.5.1}%
-\contentsline {section}{\numberline {4}Results and Testing}{5}{section.4}%
-\contentsline {section}{\numberline {5}Future Work}{5}{section.5}%
-\contentsline {section}{\numberline {6}Conclusion}{5}{section.6}%
+\contentsline {section}{\numberline {1}Introduction}{6}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Aims and Motivations}{6}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Problems}{6}{subsection.1.2}%
+\contentsline {paragraph}{\nonumberline Video}{6}{section*.5}%
+\contentsline {paragraph}{\nonumberline Games}{6}{section*.6}%
+\contentsline {section}{\numberline {2}Literature Review}{7}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Project: Real-time ray tracing}{7}{subsection.2.1}%
+\contentsline {subsubsection}{\numberline {2.1.1}Brief}{7}{subsubsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.2}What is ray tracing?}{7}{subsubsection.2.1.2}%
+\contentsline {paragraph}{\nonumberline Computer Generated Image}{7}{section*.7}%
+\contentsline {paragraph}{\nonumberline Conventional Rendering Technique}{7}{section*.8}%
+\contentsline {paragraph}{\nonumberline Realtime-ness}{7}{section*.9}%
+\contentsline {paragraph}{\nonumberline Ray tracing approach}{7}{section*.10}%
+\contentsline {paragraph}{\nonumberline Secondary rays}{8}{section*.11}%
+\contentsline {paragraph}{\nonumberline Shadow rays}{8}{section*.12}%
+\contentsline {paragraph}{\nonumberline Reflections}{8}{section*.13}%
+\contentsline {paragraph}{\nonumberline Refraction}{8}{section*.14}%
+\contentsline {paragraph}{\nonumberline Combining rays}{9}{section*.15}%
+\contentsline {paragraph}{\nonumberline Aliasing}{9}{section*.16}%
+\contentsline {subsubsection}{\numberline {2.1.3}Essential Algorithms}{10}{subsubsection.2.1.3}%
+\contentsline {paragraph}{\nonumberline Ray intersection algorithms}{10}{section*.17}%
+\contentsline {paragraph}{\nonumberline Spheres}{10}{section*.18}%
+\contentsline {subsection}{\numberline {2.2}Workflow and plan}{11}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Display and compute setup}{11}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Compute kernel}{11}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Primary rays}{12}{subsubsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Tracing primary rays}{13}{subsubsection.2.2.4}%
+\contentsline {section}{\numberline {3}Design and Implementation}{13}{section.3}%
+\contentsline {subsection}{\numberline {3.1}OpenCL and OpenGL}{13}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Host}{15}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Device}{15}{subsubsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.2}Kernel Structure}{16}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Ray Trace Kernel}{17}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Image Kernel}{18}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Reset Kernel}{18}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}Monolithic Kernel}{19}{subsubsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.3}Ray Generation}{19}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Primary Rays}{21}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Reflection}{21}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}Refraction}{21}{subsubsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.4}Shadows}{21}{subsubsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.4}Intersection With Objects}{21}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}Sphere Intersection}{21}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}Triangle Intersection}{21}{subsubsection.3.4.2}%
+\contentsline {subsubsection}{\numberline {3.4.3}OBJ Models}{21}{subsubsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.5}Generating An Image}{21}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}Phong Model}{21}{subsubsection.3.5.1}%
+\contentsline {subsubsection}{\numberline {3.5.2}Transmission \& Reflection}{21}{subsubsection.3.5.2}%
+\contentsline {subsubsection}{\numberline {3.5.3}Fresnel}{21}{subsubsection.3.5.3}%
+\contentsline {subsubsection}{\numberline {3.5.4}Shadows}{21}{subsubsection.3.5.4}%
+\contentsline {subsubsection}{\numberline {3.5.5}Combining Secondary Rays}{21}{subsubsection.3.5.5}%
+\contentsline {subsection}{\numberline {3.6}Acceleration Structures}{21}{subsection.3.6}%
+\contentsline {subsubsection}{\numberline {3.6.1}Preliminary Checks}{21}{subsubsection.3.6.1}%
+\contentsline {subsubsection}{\numberline {3.6.2}Bounding Volumes}{21}{subsubsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.3}Grid}{21}{subsubsection.3.6.3}%
+\contentsline {subsubsection}{\numberline {3.6.4}Bounding Volume Hierarchy}{21}{subsubsection.3.6.4}%
+\contentsline {section}{\numberline {4}Results and Testing}{21}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Ray Intersection Tests}{21}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Ray Tracing with no objects}{21}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Ray Tracing Spheres}{21}{subsubsection.4.1.2}%
+\contentsline {subsubsection}{\numberline {4.1.3}Ray Tracing Triangles}{21}{subsubsection.4.1.3}%
+\contentsline {subsubsection}{\numberline {4.1.4}Acceleration Structures}{21}{subsubsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.2}Resolution}{21}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Future Work}{21}{section.5}%
+\contentsline {section}{\numberline {6}Conclusion}{21}{section.6}%
+\contentsline {section}{References}{28}{section*.30}%
