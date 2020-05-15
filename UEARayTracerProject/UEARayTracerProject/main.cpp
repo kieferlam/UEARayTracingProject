@@ -66,6 +66,13 @@ bool moveRight, moveLeft;
 bool moveForward, moveBackward;
 bool moveUp, moveDown;
 
+bool benchmark_running;
+double benchmark_start_time;
+double benchmark_trace_time;
+double benchmark_image_time;
+std::vector<double> benchmark_trace, benchmark_image;
+constexpr double BENCHMARK_TIME = 60.0;
+
 const float cameraMoveSpeed = 20.0f;
 const float mouseCameraSensitivity = 0.001f;
 double mousex, mousey, oldmousex, oldmousey;
@@ -304,6 +311,16 @@ void setupEventHandlers() {
 		case GLFW_KEY_LEFT_SHIFT:
 			moveDown = action != GLFW_RELEASE ? true : false;
 			break;
+
+			// Testing
+		case GLFW_KEY_0:
+			if (benchmark_running) break;
+			std::cout << "Starting benchmark." << std::endl;
+			benchmark_running = true;
+			benchmark_start_time = glfwGetTime();
+			benchmark_trace.clear();
+			benchmark_image.clear();
+			break;
 		}
 	});
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
@@ -409,25 +426,67 @@ void runKernelTest(ModelStruct* mstruct, WorldStruct* wstruct) {
 	std::cout << log << std::endl;
 }
 
-void scene1() {
-	int mirror = world.addMaterial({ {1.0f, 1.0f, 1.0f}, 1.0f, 1.0f, 1.0f });
-	int hollowglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
-	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.517f });
-	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, 0.0f, 1.0f, 1.0f });
-	int diffuse[10];
-	std::default_random_engine rng(rand());
+void save_benchmark() {
+	std::cout << "Saving benchmark." << std::endl;
+	std::ofstream benchmark_file;
+	benchmark_file.open("benchmark.txt");
+	benchmark_file << "trace,image" << std::endl;
+	for (int i = 0; i < benchmark_trace.size(); ++i) {
+		benchmark_file << benchmark_trace[i] << "," << benchmark_image[i] << std::endl;
+	}
+	benchmark_file.close();
+}
+
+void testscene() {
+	Material m;
+	m.diffuse = {1.0f, 1.0f, 1.0f};
+	m.opacity = 1.0f;
+	m.reflectivity = 1.0f;
+	m.refractiveIndex = 1.517f;
+	m.specular = 100.0f;
+	int material = world.addMaterial(m);
+
+	int diffuse[100];
+	std::default_random_engine rng(std::chrono::system_clock::now().time_since_epoch().count());
 	std::uniform_real_distribution<float> range(0.0f, 1.0f);
 	for (int i = 0; i < sizeof(diffuse) / sizeof(diffuse[0]); ++i) {
-		diffuse[i] = world.addMaterial({{ range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f }, 0.0f, 1.0f, 1.0f});
+		diffuse[i] = world.addMaterial({ { range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f }, range(rng) * 1000.0f, 0.0f, 1.0f, 1.0f });
+		float rad = range(rng) * 5.0f + 1.0f;
+		world.addSphere({ range(rng) * 300.0f - 100.0f, rad, range(rng) * 100.0f }, rad, diffuse[i]);
 	}
 
-	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 2);
-	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 2);
+	int ms[10];
+	for (int i = 0; i < 10; ++i) {
+		ms[i] = world.addMaterial({ {1.0f, 1.0f, 1.0f}, 1000.0f, 1.0f, 0.0f, 1.0f + i * 0.07f });
+		world.addSphere({ i * 10.0f, 5.0f, -50.0f }, 5.0f, ms[i]);
+	}
+
+	// Floor
+	float floorrad = 50000.0f;
+	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, 0.0f, 0.0f, 1.0f, 1.0f });
+	world.addSphere({ 0.0f, -floorrad, 0.0f }, floorrad, floormat);
+}
+
+void scene1() {
+	float specular = 1000.0f;
+	int mirror = world.addMaterial({ {1.0f, 1.0f, 1.0f}, specular, 1.0f, 1.0f, 1.0f });
+	int hollowglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, specular, 1.0f, 0.0f, 1.04f });
+	int solidglass = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, specular, 1.0f, 0.0f, 1.517f });
+	int floormat = world.addMaterial({ {132.0f / 255.0f, 153.0f / 255.0f, 179.0f / 255.0f}, specular, 0.0f, 1.0f, 1.0f });
+	int diffuse[10];
+	std::default_random_engine rng(std::chrono::system_clock::now().time_since_epoch().count());
+	std::uniform_real_distribution<float> range(0.0f, 1.0f);
+	for (int i = 0; i < sizeof(diffuse) / sizeof(diffuse[0]); ++i) {
+		diffuse[i] = world.addMaterial({{ range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f, range(rng) * 0.4f + 0.2f }, range(rng) * 1000.0f, 0.0f, 1.0f, 1.0f});
+	}
+
+	world.addSphere({ 10.0f, 40.0f, -30.0f }, 40.0f, 0);
+	world.addSphere({ 300.0f, 40.0f, 60.0f }, 40.0f, 1);
 	world.addSphere({ 50.0f, 40.0f, 160.0f }, 40.0f, 2);
 
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 15; ++i) {
 		float rad = range(rng) * 9.0f + 1.0f;
-		world.addSphere({range(rng) * 200.0f, rad, range(rng) * 200.0f}, rad, (int)(range(rng)*13));
+		world.addSphere({range(rng) * 200.0f, rad + 1.0f, range(rng) * 200.0f}, rad, (int)(range(rng)*13));
 	}
 
 	// Floor
@@ -436,7 +495,37 @@ void scene1() {
 }
 
 void scene2() {
+	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 1.0f, 1.0f, 1.04f });
+	int material2 = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 0.0f, 1.0f, 1.0f });
+	int material3 = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 0.0f, 1.0f, 1.3f });
 
+	Model testModel;
+	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
+}
+
+void reflection_scene() {
+	int reflect = world.addMaterial({ {1.0f, 1.0f, 1.0f}, 100.0f, 1.0f, 1.0f, 1.0f });
+
+	world.addSphere({ 0.0f, 10.0f, 0.0f }, 10.0f, reflect);
+	world.addSphere({ 25.0f, 10.0f, 0.0f }, 10.0f, reflect);
+}
+
+void benchmark_scene_baseline() {
+
+}
+
+void benchmark_scene_spheres(int spheres) {
+	std::default_random_engine rng;
+	std::uniform_real_distribution<float> range(0.0f, 1.0f);
+
+	float reflect = 0.0f;
+	float opacity = 1.0f;
+	float refractiveIndex = 1.0f;
+	float rad = 10.0f;
+	for (int i = 0; i < spheres; ++i) {
+		int mat = world.addMaterial({ {range(rng) * 0.4f + 0.4f, range(rng) * 0.4f + 0.4f, range(rng) * 0.4f + 0.4f}, range(rng)*1000.0f + 1.0f, reflect, opacity, refractiveIndex });
+		world.addSphere({ (range(rng) - 0.5f) * 500.0f, (range(rng) - 0.5f) * 100.0f, range(rng) * 500.0f + 50.0f}, rad, mat);
+	}
 }
 
 int main(void) {
@@ -468,20 +557,14 @@ int main(void) {
 	config.aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
 	config.width = WINDOW_WIDTH;
 	config.height = WINDOW_HEIGHT;
-	config.bounces = 1;
+	config.bounces = 2;
 
-	//int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 1.0f, 0.0f, 1.04f });
-	//int material2 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.0f });
-	//int material3 = world.addMaterial({ { 0.3f, 0.6f, 0.5f }, 0.0f, 1.0f, 1.3f });
-
-	//Model testModel;
-	//testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
-
-	//// Add spheres to world
-	//int sphere1 = world.addSphere({ -20.0f, -5.0f, 50.0f }, 10.0f, material);
-	//world.addSphere({ 20.0f, 5.0f, 50.0f }, 10.0f, material);
-
-	scene1();
+	//testscene();
+	//reflection_scene();
+	//scene1();
+	scene2();
+	//benchmark_scene_baseline();
+	//benchmark_scene_spheres(100);
 
 	world.create();
 
@@ -551,6 +634,18 @@ int main(void) {
 	cl_event worldUpdateEvent = NULL, rarEvent = NULL, imageEvent = NULL, resetEvent = NULL, clearimgEvent = NULL;
 	cl_int worldUpdateStatus = -1, rarStatus = -1, imageStatus = -1;
 
+	std::default_random_engine reng;
+	std::uniform_real_distribution<float> sphere_dist(0.0f, 1.0f);
+	float* rands = new float[world.getSpheres().size()];
+	for (int i = 0; i < world.getSpheres().size(); ++i) {
+		rands[i] = sphere_dist(reng);
+	}
+
+	// Init benchmark stuff
+	constexpr size_t benchmark_reserve_size = 10 ^ 6;
+	benchmark_trace.reserve(benchmark_reserve_size);
+	benchmark_image.reserve(benchmark_reserve_size);
+
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
 		// Time
@@ -558,20 +653,37 @@ int main(void) {
 		float deltaTime = now - lastframetime;
 		lastframetime = now;
 
-		/*world.getSphere(sphere1)->position.x = 20.0f + cos(elapsed_time.count()) * 20.0f;
-		world.getSphere(sphere1)->position.z = 100.0f + sin(elapsed_time.count()) * 10.0f;
+		for (int i = 0; i < (int)world.getSpheres().size() - 1; ++i) {
+			world.getSphere(i)->position.y = world.getSphere(i)->radius + abs(sin(now + rands[i])) * 5.0f;
+		}
 
-		worldUpdateEvent = world.updateSpheres(sphere1, 1);*/
+		//worldUpdateEvent = world.updateSpheres(0, world.getSpheres().size());
 
-		updateCameraMovement(deltaTime);
+		if(!benchmark_running) updateCameraMovement(deltaTime);
 
 		rarkernel.update();
 
 		//clearimgEvent = clearimagekernel.queue(0, NULL);
 		resetEvent = resetkernel.queue(0, NULL);
+
+		if (benchmark_running) benchmark_trace_time = glfwGetTime();
 		rarEvent = rarkernel.queue(1, &resetEvent);
+		clWaitForEvents(1, &rarEvent);
+		if (benchmark_running) benchmark_trace.push_back(glfwGetTime() - benchmark_trace_time);
+
+		if (benchmark_running) benchmark_image_time = glfwGetTime();
 		imageEvent = imagekernel.queue(1, &rarEvent);
+		clWaitForEvents(1, &imageEvent);
+		if (benchmark_running) benchmark_image.push_back(glfwGetTime() - benchmark_image_time);
+
 		clFinish(cl::queue);
+
+		if (benchmark_running) {
+			if (glfwGetTime() - benchmark_start_time >= BENCHMARK_TIME) {
+				benchmark_running = false;
+				save_benchmark();
+			}
+		}
 
 		// Render
 		glUseProgram(shaderProgram);

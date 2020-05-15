@@ -6,7 +6,7 @@
 #endif
 
 
-__kernel void RARTrace(
+__kernel void SamplerTrace(
     __constant RayConfig* config, 
     __constant World* world, 
     __global TraceResult* results, 
@@ -52,7 +52,7 @@ __kernel void RARTrace(
             float3 v = cross(r.direction, u);
             int numHit = result->hasIntersect;
             for(int i = 0; i < NUM_SHADOW_RAYS; ++i){
-                float dist = pow(i / (NUM_SHADOW_RAYS - 1.0f), 0.5f) * SHADOW_RAY_DIST;
+                float dist = pow(i / (NUM_SHADOW_RAYS - 1.0f), 0.5f) * 0.2f;
                 float angle = 2.0f * PI * TURN_FRACTION * i;
                 float sx = dist * cos(angle);
                 float sy = dist * sin(angle);

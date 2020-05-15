@@ -29,16 +29,24 @@ __declspec (align(16)) struct RayConfig {
 
 __declspec (align(16)) struct TraceResult {
 	Ray ray;
+
 	cl_float3 intersect;
+
 	cl_float3 normal;
+
 	cl_float T;
 	cl_float T2;
 	cl_float cosine;
-	cl_float pad1;
+	cl_float shadowSoftness;
+
 	cl_uint objectType;
 	cl_uint objectIndex;
 	cl_uint material;
 	cl_uint bounce;
+
+	cl_uint rayType;
+	cl_uint pad1[3];
+
 	cl_int hasIntersect;
 	cl_int hasTraced;
 	cl_int pad2[2];

@@ -59,7 +59,7 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			int triangle = world->addTriangle(face.x, face.y, face.z);
 			m->addTriangle(triangle);
 
-			world->setTriangleMaterial(triangle, 2);
+			world->setTriangleMaterial(triangle, 0);
 		}
 
 		std::cout << "Mesh " << m->name << " with " << m->getTriangleCount() << " triangles." << std::endl;

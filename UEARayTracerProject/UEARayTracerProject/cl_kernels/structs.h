@@ -27,6 +27,7 @@ typedef struct __attribute__ ((aligned(16))){
 
 typedef struct __attribute__ ((aligned(16))){
     float3 diffuse;
+    float specular;
     float reflectivity;
     float opacity;
     float refractiveIndex;
@@ -57,28 +58,32 @@ typedef struct __attribute__ ((aligned(16))){
 
 typedef struct __attribute__ ((aligned(16))) {
     uint numRays;
-    uint pad1[3];
 	uint numSpheres;
-    uint pad2[3];
     uint numTriangles;
-    uint pad3[3];
     uint numModels;
-    uint pad4[3];
 } World;
 
 typedef struct TraceResult TraceResult;
 struct __attribute__ ((aligned(16))) TraceResult{
     Ray ray;
+
     float3 intersect;
+
     float3 normal;
+
     float T;
     float T2;
     float cosine;
-    float pad1;
+    float shadowSoftness;
+
     uint objectType;
     uint objectIndex;
     uint material;
     uint bounce;
+
+    uint rayType;
+    uint pad1[3];
+
     int hasIntersect;
     int hasTraced;
     int pad2[2];

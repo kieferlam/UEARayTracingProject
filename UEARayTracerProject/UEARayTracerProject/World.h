@@ -10,8 +10,8 @@
 #define SQ(x) ((x)*(x)) 
 #define CUBE(x) ((x)*(x)*(x))
 
-#define GRID_CELL_DEPTH (5)
-#define GRID_MAX_TRIANGLES_PER_CELL (64) // MAKE SURE THIS IS A MULTIPLE OF 16
+#define GRID_CELL_DEPTH (2)
+#define GRID_MAX_TRIANGLES_PER_CELL (512) // MAKE SURE THIS IS A MULTIPLE OF 16
 
 inline constexpr int static_pow(const int base, const int exp) { return (exp == 0) ? 1 : base * static_pow(base, exp-1); }
 inline constexpr int static_numrays(const int numchildren, const int bounce) { return (1 - static_pow(numchildren, bounce + 1)) / (1-numchildren); }
@@ -65,13 +65,9 @@ __declspec (align(16)) struct ModelStruct {
 
 __declspec (align(16)) struct WorldStruct {
 	cl_uint numRays;
-	cl_uint pad1[3];
 	cl_uint numSpheres;
-	cl_uint pad2[3];
 	cl_uint numTriangles;
-	cl_uint pad3[3];
 	cl_uint numModels;
-	cl_uint pad4[3];
 };
 
 class World {
@@ -124,6 +120,8 @@ public:
 	inline std::vector<cl_float3>& getVertexBuffer() { return vertices; }
 
 	inline std::vector<Material>& getMaterialBuffer() { return materials; }
+
+	inline std::vector<Sphere>& getSpheres() { return spheres; }
 
 	inline cl_uint getTriangleCount() { return world.numTriangles; }
 

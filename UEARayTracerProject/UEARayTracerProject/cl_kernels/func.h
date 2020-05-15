@@ -194,6 +194,10 @@ bool triangle_intersect(const Ray* ray, __constant Triangle* const_triangle, __c
     return true;
 }
 
+int getCellBoundaryOffset(float a){
+    return a < 0.0f ? 0 : 1;
+}
+
 bool model_intersect(
     WorldPack pack,
     const Ray* ray, 
@@ -228,9 +232,13 @@ bool model_intersect(
     float3 deltaT = fabs(cellSize * invdir);
 
     int3 currentV = convert_int3(floor(dda_origin / cellSize));
-    float3 Tv = r.direction / cellSize;
+    int3 cellBoundaryOffset = {r.direction.x > 0.0f, r.direction.y > 0.0f, r.direction.z > 0.0f};
+    float3 cellBoundary = convert_float3(currentV + cellBoundaryOffset) * cellSize + gridmin;
+    float3 Tv = (cellBoundary - r.origin) / r.direction;
     int max_step = GRID_CELL_ROW_COUNT * 2;
 
+    bool hasIntersect = false;
+    float closest_triangle_T = MAX_VALUE;
     while(
         currentV.x >= 0 && currentV.x < GRID_CELL_ROW_COUNT &&
         currentV.y >= 0 && currentV.y < GRID_CELL_ROW_COUNT &&
@@ -240,8 +248,6 @@ bool model_intersect(
         max_step--;
         uint celloffset = getTriangleGridOffset(currentV);
 
-        bool hasIntersect = false;
-        float closest_triangle_T = MAX_VALUE;
         for(int i = 0; i < pack.triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
             __constant Triangle* triangle = pack.triangles + pack.grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
 
@@ -258,7 +264,6 @@ bool model_intersect(
 
             hasIntersect = true;
         }
-        if(hasIntersect) return true;
 
         float3 incr = {
             (Tv.x <= Tv.y) && (Tv.x <= Tv.z),
@@ -270,124 +275,8 @@ bool model_intersect(
         Tv += incr * deltaT;
         currentV += convert_int3(incr * step);
     }
-
-    return false;
+    return hasIntersect;
 }
-
-// bool model_intersect_temp(
-//     __constant World* world, 
-//     __constant float3* vertices, 
-//     TRIANGLE_GRID grid, 
-//     TRIANGLE_GRID_COUNT triangleCountGrid, 
-//     const Ray* ray, 
-//     uchar modelIndex, 
-//     float* closest_T, 
-//     int* closest_I){
-
-//     __constant Model* model = world->models + modelIndex;
-
-//     // Step through model grid
-//     float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
-//     float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
-
-//     float3 cellSize = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
-//     float3 rayStart = (ray->origin + ray->direction * *closest_T);
-//     float3 dda_origin = rayStart - gridmin;
-
-//     union{
-//         float array[4];
-//         float3 vector;
-//     } stepPolarity;
-//     stepPolarity.vector = dda_getCellStepPolarity(ray->direction);
-
-//     union{
-//         float array[4];
-//         float3 vector;
-//     } dtCell;
-//     dtCell.vector = dda_getStep(cellSize, ray->direction, stepPolarity.vector);
-//     union{
-//         int array[3];
-//         int3 vector;
-//     } cellindex;
-//     cellindex.vector = dda_getCellOrigin(rayStart, gridmin, cellSize);
-    
-//     union{
-//         float3 vector;
-//         float array[3];
-//     } cumT;
-//     cumT.vector = dda_getInitialT(ray, *closest_T - 1.0f, gridmin, cellSize);
-
-//     // for(int z = 0; z < GRID_CELL_ROW_COUNT; ++z){
-//     //     uint celloffset = getTriangleGridOffset((int3)(1, 2, z));
-
-//     //     if(debug_isCenterPixel()) printf("%d", triangleCountGrid[model->triangleCountOffset + celloffset]);
-//     //     for(int i = 0; i < triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
-//     //         __constant Triangle* triangle = world->triangles + grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
-
-//     //         float3 intersect;
-//     //         float T;
-
-//     //         if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
-
-//     //             *closest_T = T;
-//     //             *closest_I = i;
-//     //             return true;
-//     //     }
-//     // }
-//     // return false;
-
-//     int max_step = GRID_CELL_ROW_COUNT * 2;
-//     while(
-//         cellindex.vector.x >= 0 && cellindex.vector.x < GRID_CELL_ROW_COUNT &&
-//         cellindex.vector.y >= 0 && cellindex.vector.y < GRID_CELL_ROW_COUNT &&
-//         cellindex.vector.z >= 0 && cellindex.vector.z < GRID_CELL_ROW_COUNT &&
-//         max_step > 0
-//     ){
-//         max_step--;
-
-//         // Intersect test with cell's triangles
-//         // Triangle intersections
-//         bool hasIntersect = false;
-//         uint celloffset = getTriangleGridOffset(cellindex.vector);
-//         float closest_triangle_T = MAX_VALUE;
-
-//         if(debug_isCenterPixel()) printf("%d, %d, %d, %d, %f, %f, %f", max_step, cellindex.vector.x, cellindex.vector.y, cellindex.vector.z, cumT.vector.x, cumT.vector.y, cumT.vector.z);
-
-//         for(int i = 0; i < triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
-//             __constant Triangle* triangle = world->triangles + grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
-
-//             float3 intersect;
-//             float T;
-
-//             if(!triangle_intersect(ray, triangle, vertices, &intersect, &T)) continue;
-
-//             if(T < closest_triangle_T){
-//                 closest_triangle_T = T;
-//                 *closest_T = T;
-//                 *closest_I = i;
-//             }
-
-//             hasIntersect = true;
-//         }
-//         if(hasIntersect) return true;
-
-//         // Find lowest T value so we know which dimension to increment
-//         int lowI = 0;
-//         float lowT = cumT.array[0];
-//         for(int i = 1; i < 3; ++i){
-//             if(cumT.array[i] < lowT){
-//                 lowT = cumT.array[i];
-//                 lowI = i;
-//             }
-//         }
-
-//         cumT.array[lowI] += dtCell.array[lowI];
-
-//         cellindex.array[lowI] += stepPolarity.array[lowI] * 1.0f;
-//     }
-
-//     return false;
-// }
 
 bool bvh_plane_intersect(__constant Model* model, float* planeDotOrigin, float* planeDotDirection, float* tNear, float* tFar, uint* planeIndex){
     for(uint plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
@@ -453,11 +342,149 @@ float triangle_intersect_T(Ray* ray, Triangle* triangle, __constant float3* vert
     return t;
 }
 
+
+/**
+This function just calculates the intersections of a ray and the scene/world.
+Image processing and ray-combination should happen elsewhere.
+*/
+void local_trace(
+    __constant RayConfig* input, 
+    WorldPack pack,
+    const Ray* ray, 
+    TraceResult* result){
+
+    result->hasTraced = true;
+    // Sphere intersection
+    float closest_T = MAX_VALUE;
+    float closest_T2 = 0;
+    int closest_i = -1;
+    int closest_type = -1;
+    for(int i = 0; i < pack.world->numSpheres; ++i){
+        __constant Sphere* sphere = &pack.spheres[i];
+
+        float3 vec_raysphere = ray->origin - sphere->position;
+        float dot_raysphere = dot(normalize(vec_raysphere), ray->direction);
+
+        // If sphere is behind origin and origin is outside, skip
+        if(-dot_raysphere < 0.0f && SQ(sphere->radius) < dot(vec_raysphere, vec_raysphere)) continue;
+
+        // Find intersection
+        SphereIntersect intersect_result;
+        if(!sphere_intersect(ray, sphere, &intersect_result)) continue;
+
+        // Check if closer
+        if(intersect_result.minT < closest_T){
+            closest_T = intersect_result.minT;
+            closest_T2 = intersect_result.maxT;
+            closest_i = i;
+            closest_type = SPHERE_TYPE;
+        }
+    }
+
+    float planeDotRayOrigin[BVH_PLANE_COUNT];
+    float planeDotRayDirection[BVH_PLANE_COUNT];
+    // pre-compute ray with plane dot products
+    for(int plane_i = 0; plane_i < BVH_PLANE_COUNT; ++plane_i){
+        planeDotRayOrigin[plane_i] = dot(ray->origin, BVH_PlaneNormals[plane_i]);
+        planeDotRayDirection[plane_i] = dot(ray->direction, BVH_PlaneNormals[plane_i]);
+    }
+
+    // Model intersections
+    char closest_model = -1;
+    float closest_model_T = MAX_VALUE;
+    char closest_plane = -1;
+    for(int i = 0; i < pack.world->numModels; ++i){
+        __constant Model* model = pack.models + i;
+
+        float tnear = -MAX_VALUE;
+        float tfar = MAX_VALUE;
+        uint planeIndex = -1;
+        
+        if(bvh_plane_intersect(model, planeDotRayOrigin, planeDotRayDirection, &tnear, &tfar, &planeIndex)){
+            if(tnear < closest_model_T){
+                closest_model_T = tnear;
+                closest_plane = planeIndex;
+                closest_model = i;
+            }
+        }
+    }
+
+    // If model bounding volume intersect
+    if(closest_model_T < closest_T){
+        float model_T = closest_model_T;
+        int tri_i;
+        if(model_intersect(pack, ray, closest_model, &model_T, &tri_i)){
+            closest_T = model_T;
+            closest_T2 = closest_T;
+            closest_i = tri_i;
+            closest_type = TRIANGLE_TYPE;
+        }
+    }
+
+    // for(int i = 0; i < pack.world->numTriangles; ++i){
+    //     __constant Triangle* tri = pack.triangles + i; 
+    //     float3 tri_intersect;
+    //     float tri_T;
+    //     if(triangle_intersect(ray, tri, pack.vertices, &tri_intersect, &tri_T)){
+    //         if(tri_T < closest_T){
+    //             closest_T = tri_T;
+    //             closest_T2 = closest_T;
+    //             closest_i = i;
+    //             closest_type = TRIANGLE_TYPE;
+    //         }
+    //     }
+    // }
+
+    // If no intersect, stop
+    if(closest_i < 0){
+        result->hasIntersect = false;
+        return;
+    }
+
+    result->hasIntersect = true;
+    result->T = closest_T;
+    result->T2 = closest_T2;
+    result->intersect = ray->origin + ray->direction * result->T;
+    result->objectIndex = closest_i;
+    result->objectType = closest_type;
+
+    // Find the normal of the sphere
+    if(result->objectType == SPHERE_TYPE){
+        result->normal = sphere_normal(&pack.spheres[result->objectIndex], result->intersect);
+        result->material = pack.spheres[result->objectIndex].material;
+    }else if(result->objectType == TRIANGLE_TYPE){
+        result->normal = pack.triangles[closest_i].normal;
+        result->material = pack.triangles[result->objectIndex].materialIndex;
+    }
+    result->cosine = fabs(dot(ray->direction, result->normal));
+
+}
+
+void trace(
+    __constant RayConfig* input, 
+    WorldPack pack,
+    const Ray* ray, 
+    __global TraceResult* result){
+    TraceResult localResult;
+    local_trace(input, pack, ray, &localResult);
+    *result = localResult;
+}
+
 // Image resolve
 
-// float3 phong(__constant Material* material){
+float3 phong(TraceResult* trace, Material* material){
+    float intensity = clamp(dot(trace->normal, -daylight_direction), AMBIENT_STRENGTH, 1.0f);
+    float3 diffuse = intensity * material->diffuse;
 
-// }
+    //  Blinn-Phong Half Vector
+    float3 H = normalize(daylight_direction + trace->ray.direction);
+
+    // specular intensity
+    intensity = pow(clamp(dot(-trace->normal, H), 0.0f, 1.0f), material->specular) * SPECULAR_STRENGTH;
+    float3 specular = (float3)(intensity, intensity, intensity);
+
+    return diffuse + specular;
+}
 
 // float3 calc_emission(){
 

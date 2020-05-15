@@ -253,21 +253,4 @@ void Mesh::constructOctree(World* world, int depth, const cl_float2* bounds)
 	if (depth == 0) {
 		leafCells.push_back(&octree);
 	}
-
-	// Test to make sure every triangle is in the leaf cells
-	for (auto tri = octree.triangles.begin(); tri != octree.triangles.end(); ++tri) {
-		bool has = false;
-		for (auto it = leafCells.begin(); it != leafCells.end(); ++it) {
-			for (auto tit = (*it)->triangles.begin(); tit != (*it)->triangles.end(); ++tit) {
-				if (*tit == *tri) {
-					has = true;
-					break;
-				}
-			}
-			if (has) break;
-		}
-		if (!has) {
-			std::cout << "Missing triangle: " << *tri << std::endl;
-		}
-	}
 }
