@@ -27,7 +27,7 @@ public:
 
 	inline ModelStruct* getStruct() { return modelStruct; }
 
-	void loadFromFile(const char* filename, World* world, float scale);
+	void loadFromFile(const char* filename, World* world, float scale, int mat);
 
 };
 

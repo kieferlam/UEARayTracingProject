@@ -495,12 +495,12 @@ void scene1() {
 }
 
 void scene2() {
-	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 1.0f, 1.0f, 1.04f });
+	int material = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 1.0f, 0.0f, 1.04f });
 	int material2 = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 0.0f, 1.0f, 1.0f });
 	int material3 = world.addMaterial({ { 1.0f, 1.0f, 1.0f }, 100.0f, 0.0f, 1.0f, 1.3f });
 
 	Model testModel;
-	testModel.loadFromFile("data/monkey.obj", &world, 10.0f);
+	testModel.loadFromFile("data/monkey.obj", &world, 10.0f, material);
 }
 
 void reflection_scene() {
@@ -518,14 +518,25 @@ void benchmark_scene_spheres(int spheres) {
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> range(0.0f, 1.0f);
 
-	float reflect = 0.0f;
-	float opacity = 1.0f;
-	float refractiveIndex = 1.0f;
+	float reflect = 1.0f;
+	float opacity = 0.0f;
+	float refractiveIndex = 1.517f;
 	float rad = 10.0f;
 	for (int i = 0; i < spheres; ++i) {
 		int mat = world.addMaterial({ {range(rng) * 0.4f + 0.4f, range(rng) * 0.4f + 0.4f, range(rng) * 0.4f + 0.4f}, range(rng)*1000.0f + 1.0f, reflect, opacity, refractiveIndex });
 		world.addSphere({ (range(rng) - 0.5f) * 500.0f, (range(rng) - 0.5f) * 100.0f, range(rng) * 500.0f + 50.0f}, rad, mat);
 	}
+}
+
+void benchmark_scene_model() {
+	float reflect = 0.0f;
+	float opacity = 1.0f;
+	int material = world.addMaterial({ { 0.6f, 0.7f, 0.8f }, 100.0f, reflect, opacity, 1.517f });
+
+	Model testModel;
+	testModel.loadFromFile("data/monkey.obj", &world, 10.0f, material);
+
+	std::cout << "Triangle Count: " << world.getTriangleCount() << std::endl;
 }
 
 int main(void) {
@@ -557,14 +568,15 @@ int main(void) {
 	config.aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
 	config.width = WINDOW_WIDTH;
 	config.height = WINDOW_HEIGHT;
-	config.bounces = 2;
+	config.bounces = 0;
 
 	//testscene();
 	//reflection_scene();
 	//scene1();
-	scene2();
+	//scene2();
 	//benchmark_scene_baseline();
-	//benchmark_scene_spheres(100);
+	//benchmark_scene_spheres(300);
+	benchmark_scene_model();
 
 	world.create();
 

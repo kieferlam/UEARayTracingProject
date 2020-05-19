@@ -83,11 +83,11 @@ void local_getRefractDirection(float3* direction_out, float3 direction_in, float
     *direction_out = n * direction_in + (n * cosI - cosT) * normal;
 }
 
-float project(const float3 planeNormal, const float3 point){
+float project(float3 planeNormal, float3 point){
     return dot(planeNormal, point);
 }
 
-float3 dda_getStep(const float3 cellSize, const float3 direction, const float3 stepPolarity){
+float3 dda_getStep(float3 cellSize, float3 direction, float3 stepPolarity){
     float3 invdir = 1.0f / direction;
     if(direction.x == 0.0f) invdir.x = 0.0f;
     if(direction.y == 0.0f) invdir.y = 0.0f;
@@ -95,13 +95,13 @@ float3 dda_getStep(const float3 cellSize, const float3 direction, const float3 s
     return stepPolarity * cellSize * invdir;
 }
 
-float3 dda_getInitialT(const Ray* ray, const float boundT, const float3 gridmin, const float3 cellSize){
+float3 dda_getInitialT(Ray* ray, float boundT, float3 gridmin, float3 cellSize){
     float3 Ogrid = ray->origin + ray->direction * boundT - gridmin;
     float3 Ocell = Ogrid / cellSize;
     return (floor(Ocell) * cellSize - Ogrid) / ray->direction;
 }
 
-int3 dda_getCellOrigin(const float3 startPos, const float3 gridmin, const float3 cellSize){
+int3 dda_getCellOrigin(float3 startPos, float3 gridmin, float3 cellSize){
     float3 cellO = (startPos - gridmin) / cellSize;
     return (int3)(
         (int) clamp(floor(cellO.x), 0.0f, (float)GRID_CELL_ROW_COUNT-1),
@@ -110,12 +110,12 @@ int3 dda_getCellOrigin(const float3 startPos, const float3 gridmin, const float3
     );
 }
 
-float3 dda_getCellStepPolarity(const float3 direction){
+float3 dda_getCellStepPolarity(float3 direction){
     return (float3)(direction.x < 0 ? -1.0f : 1.0f, direction.y < 0 ? -1.0f : 1.0f, direction.z < 0 ? -1.0f : 1.0f);
 }
 
-uint getTriangleGridOffset(int3 cellindex){
-    return cellindex.x * SQ(GRID_CELL_ROW_COUNT) + cellindex.y * GRID_CELL_ROW_COUNT + cellindex.z;
+uint getTriangleGridOffset(float3 cellindex){
+    return (uint)(cellindex.x * SQ(GRID_CELL_ROW_COUNT) + cellindex.y * GRID_CELL_ROW_COUNT + cellindex.z);
 }
 
 /**
@@ -126,7 +126,7 @@ float3 sphere_normal(__constant Sphere* sphere, float3 surface){
     return normalize(surface - sphere->position);
 }
 
-bool sphere_intersect(const Ray* ray, __constant Sphere* sphere, SphereIntersect* result){
+bool sphere_intersect(Ray* ray, __constant Sphere* sphere, SphereIntersect* result){
     float3 vec_raysphere = ray->origin - sphere->position; // This line should be omitted in the future for performance optimizations
 
     // at^2 + bt + c = 0
@@ -156,7 +156,7 @@ bool sphere_intersect(const Ray* ray, __constant Sphere* sphere, SphereIntersect
     return true;
 }
 
-bool triangle_intersect(const Ray* ray, __constant Triangle* const_triangle, __constant float3* vertices, float3* intersect, float* T){
+bool triangle_intersect(Ray* ray, __constant Triangle* const_triangle, __constant float3* vertices, float3* intersect, float* T){
     // Copy to local/generic memory for faster operations
     Triangle triangle = *const_triangle;
 
@@ -199,43 +199,47 @@ int getCellBoundaryOffset(float a){
 }
 
 bool model_intersect(
-    WorldPack pack,
-    const Ray* ray, 
+    WorldPack* pack,
+    Ray* ray, 
     uchar modelIndex, 
     float* closest_T, 
     int* closest_I){
-    
-    float T = *closest_T;
-    const Ray r = *ray;
 
-    __constant Model* model = pack.models + modelIndex;
+    float T = *closest_T;
+
+    __constant Model* model = pack->models + modelIndex;
 
     // Step through model grid
     float3 gridmin = {model->bounds[0].x, model->bounds[1].x, model->bounds[2].x};
     float3 gridmax = {model->bounds[0].y, model->bounds[1].y, model->bounds[2].y};
 
     float3 cellSize = (gridmax - gridmin) / GRID_CELL_ROW_COUNT;
-    float3 rayStart = (r.origin + r.direction * T * (1.0f + EPSILON));
+    float3 rayStart = (ray->origin + ray->direction * T);
     float3 dda_origin = rayStart - gridmin;
 
     float3 step = {
-        r.direction.x < 0.0f ? -1.0f : 1.0f,
-        r.direction.y < 0.0f ? -1.0f : 1.0f,
-        r.direction.z < 0.0f ? -1.0f : 1.0f
+        ray->direction.x < 0.0f ? -1.0f : 1.0f,
+        ray->direction.y < 0.0f ? -1.0f : 1.0f,
+        ray->direction.z < 0.0f ? -1.0f : 1.0f
     };
-    if(r.direction.x == 0.0f) step.x = 0.0f;
-    if(r.direction.y == 0.0f) step.y = 0.0f;
-    if(r.direction.z == 0.0f) step.z = 0.0f;
+    if(ray->direction.x == 0.0f) step.x = 0.0f;
+    if(ray->direction.y == 0.0f) step.y = 0.0f;
+    if(ray->direction.z == 0.0f) step.z = 0.0f;
 
-    float3 invdir = 1.0f / r.direction;
+    dda_origin += step * EPSILON;
+
+    float3 invdir = 1.0f / ray->direction;
 
     float3 deltaT = fabs(cellSize * invdir);
 
-    int3 currentV = convert_int3(floor(dda_origin / cellSize));
-    int3 cellBoundaryOffset = {r.direction.x > 0.0f, r.direction.y > 0.0f, r.direction.z > 0.0f};
+    float3 currentV = floor(dda_origin / cellSize);
+    float3 cellBoundaryOffset = {ray->direction.x > 0.0f, ray->direction.y > 0.0f, ray->direction.z > 0.0f};
     float3 cellBoundary = convert_float3(currentV + cellBoundaryOffset) * cellSize + gridmin;
-    float3 Tv = (cellBoundary - r.origin) / r.direction;
-    int max_step = GRID_CELL_ROW_COUNT * 2;
+    float3 Tv = (cellBoundary - ray->origin) / ray->direction;
+    if(ray->direction.x == 0.0f) Tv.x = 9999.0f;
+    if(ray->direction.y == 0.0f) Tv.y = 9999.0f;
+    if(ray->direction.z == 0.0f) Tv.z = 9999.0f;
+    int max_step = 1000;
 
     bool hasIntersect = false;
     float closest_triangle_T = MAX_VALUE;
@@ -246,20 +250,21 @@ bool model_intersect(
         max_step > 0
     ){
         max_step--;
-        uint celloffset = getTriangleGridOffset(currentV);
+        unsigned int celloffset = getTriangleGridOffset(currentV);
 
-        for(int i = 0; i < pack.triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
-            __constant Triangle* triangle = pack.triangles + pack.grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
+        for(int i = 0; i < pack->triangleCountGrid[model->triangleCountOffset + celloffset]; ++i){
+            unsigned int tri_i = pack->grid[model->triangleGridOffset + (celloffset * GRID_MAX_TRIANGLES_PER_CELL) + i];
+            __constant Triangle* triangle = pack->triangles + tri_i;
 
             float3 intersect;
             float T;
 
-            if(!triangle_intersect(ray, triangle, pack.vertices, &intersect, &T)) continue;
+            if(!triangle_intersect(ray, triangle, pack->vertices, &intersect, &T)) continue;
 
             if(T < closest_triangle_T){
                 closest_triangle_T = T;
                 *closest_T = T;
-                *closest_I = i;
+                *closest_I = tri_i;
             }
 
             hasIntersect = true;
@@ -273,7 +278,7 @@ bool model_intersect(
 
 
         Tv += incr * deltaT;
-        currentV += convert_int3(incr * step);
+        currentV += incr * step;
     }
     return hasIntersect;
 }
@@ -349,8 +354,8 @@ Image processing and ray-combination should happen elsewhere.
 */
 void local_trace(
     __constant RayConfig* input, 
-    WorldPack pack,
-    const Ray* ray, 
+    WorldPack* pack,
+    Ray* ray, 
     TraceResult* result){
 
     result->hasTraced = true;
@@ -359,8 +364,8 @@ void local_trace(
     float closest_T2 = 0;
     int closest_i = -1;
     int closest_type = -1;
-    for(int i = 0; i < pack.world->numSpheres; ++i){
-        __constant Sphere* sphere = &pack.spheres[i];
+    for(int i = 0; i < pack->world->numSpheres; ++i){
+        __constant Sphere* sphere = &pack->spheres[i];
 
         float3 vec_raysphere = ray->origin - sphere->position;
         float dot_raysphere = dot(normalize(vec_raysphere), ray->direction);
@@ -393,8 +398,8 @@ void local_trace(
     char closest_model = -1;
     float closest_model_T = MAX_VALUE;
     char closest_plane = -1;
-    for(int i = 0; i < pack.world->numModels; ++i){
-        __constant Model* model = pack.models + i;
+    for(int i = 0; i < pack->world->numModels; ++i){
+        __constant Model* model = pack->models + i;
 
         float tnear = -MAX_VALUE;
         float tfar = MAX_VALUE;
@@ -409,6 +414,7 @@ void local_trace(
         }
     }
 
+#ifndef SKIP_DDA
     // If model bounding volume intersect
     if(closest_model_T < closest_T){
         float model_T = closest_model_T;
@@ -420,20 +426,21 @@ void local_trace(
             closest_type = TRIANGLE_TYPE;
         }
     }
-
-    // for(int i = 0; i < pack.world->numTriangles; ++i){
-    //     __constant Triangle* tri = pack.triangles + i; 
-    //     float3 tri_intersect;
-    //     float tri_T;
-    //     if(triangle_intersect(ray, tri, pack.vertices, &tri_intersect, &tri_T)){
-    //         if(tri_T < closest_T){
-    //             closest_T = tri_T;
-    //             closest_T2 = closest_T;
-    //             closest_i = i;
-    //             closest_type = TRIANGLE_TYPE;
-    //         }
-    //     }
-    // }
+#else
+    for(int i = 0; i < pack->world->numTriangles; ++i){
+        __constant Triangle* tri = pack->triangles + i; 
+        float3 tri_intersect;
+        float tri_T;
+        if(triangle_intersect(ray, tri, pack->vertices, &tri_intersect, &tri_T)){
+            if(tri_T < closest_T){
+                closest_T = tri_T;
+                closest_T2 = closest_T;
+                closest_i = i;
+                closest_type = TRIANGLE_TYPE;
+            }
+        }
+    }
+#endif
 
     // If no intersect, stop
     if(closest_i < 0){
@@ -450,11 +457,11 @@ void local_trace(
 
     // Find the normal of the sphere
     if(result->objectType == SPHERE_TYPE){
-        result->normal = sphere_normal(&pack.spheres[result->objectIndex], result->intersect);
-        result->material = pack.spheres[result->objectIndex].material;
+        result->normal = sphere_normal(&pack->spheres[result->objectIndex], result->intersect);
+        result->material = pack->spheres[result->objectIndex].material;
     }else if(result->objectType == TRIANGLE_TYPE){
-        result->normal = pack.triangles[closest_i].normal;
-        result->material = pack.triangles[result->objectIndex].materialIndex;
+        result->normal = pack->triangles[closest_i].normal;
+        result->material = pack->triangles[result->objectIndex].materialIndex;
     }
     result->cosine = fabs(dot(ray->direction, result->normal));
 
@@ -462,8 +469,8 @@ void local_trace(
 
 void trace(
     __constant RayConfig* input, 
-    WorldPack pack,
-    const Ray* ray, 
+    WorldPack* pack,
+    Ray* ray, 
     __global TraceResult* result){
     TraceResult localResult;
     local_trace(input, pack, ray, &localResult);

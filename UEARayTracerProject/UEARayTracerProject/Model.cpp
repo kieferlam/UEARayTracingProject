@@ -12,7 +12,7 @@ Model::~Model()
 {
 }
 
-void Model::loadFromFile(const char* filename, World* world, float scale)
+void Model::loadFromFile(const char* filename, World* world, float scale, int mat)
 {
 	if (world == nullptr) {
 		std::cout << "World ptr cannot be null. Could not load file." << std::endl;
@@ -59,7 +59,7 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 			int triangle = world->addTriangle(face.x, face.y, face.z);
 			m->addTriangle(triangle);
 
-			world->setTriangleMaterial(triangle, 0);
+			world->setTriangleMaterial(triangle, mat);
 		}
 
 		std::cout << "Mesh " << m->name << " with " << m->getTriangleCount() << " triangles." << std::endl;
@@ -93,7 +93,8 @@ void Model::loadFromFile(const char* filename, World* world, float scale)
 		// Get leaf nodes and put into grid
 		for (auto leaf = m->getLeafNodes().begin(); leaf != m->getLeafNodes().end(); ++leaf) {
 			const OctreeCell* cell = *leaf;
-			cl_float3 boundsOffset = { cell->bounds[0].x - mStruct.bounds[0].x, cell->bounds[1].x - mStruct.bounds[1].x, cell->bounds[2].x - mStruct.bounds[2].x };
+			cl_float3 cellMid = { (cell->bounds[0].y + cell->bounds[0].x) * 0.5f, (cell->bounds[1].y + cell->bounds[1].x) * 0.5f, (cell->bounds[2].y + cell->bounds[2].x) * 0.5f };
+			cl_float3 boundsOffset = { cellMid.x - mStruct.bounds[0].x, cellMid.y - mStruct.bounds[1].x, cellMid.z - mStruct.bounds[2].x };
 
 			cl_int3 index = { (boundsOffset.x / boundsSize[0]) * GRID_CELL_ROW_COUNT, (boundsOffset.y / boundsSize[1]) * GRID_CELL_ROW_COUNT, (boundsOffset.z / boundsSize[2]) * GRID_CELL_ROW_COUNT };
 

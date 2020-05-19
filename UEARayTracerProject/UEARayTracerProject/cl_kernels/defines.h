@@ -32,9 +32,11 @@
 #define DAYLIGHT_COSINE_STRENGTH (0.7f)
 #define DAYLIGHT_SHADOW_STRENGTH (0.7f)
 
-#define MAX_RESULT_TREE_STACK (243)
+#define MAX_RESULT_TREE_STACK (256)
 
 #define print3f(v) printf("%f, %f, %f", v.x, v.y, v.z)
+
+//#define SKIP_DDA
 
 // types
 typedef __constant unsigned char* SKYBOX;

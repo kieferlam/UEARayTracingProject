@@ -41,7 +41,7 @@ __kernel void RARTrace(
         int rayOffset = offsets[i];
         __global TraceResult* result = baseResult + rayOffset;
         Ray r = result->ray;
-        trace(config, pack, &r, result);
+        trace(config, &pack, &r, result);
 
         // If is shadow ray, cast multiple rays to find softness
         if(result->rayType == SHADOW_TYPE){
@@ -59,7 +59,7 @@ __kernel void RARTrace(
                 softShadowRay.direction = normalize(dist * sx * u + dist * sy * v + r.direction);
 
                 TraceResult shadowResult;
-                local_trace(config, pack, &softShadowRay, &shadowResult);
+                local_trace(config, &pack, &softShadowRay, &shadowResult);
                 if(shadowResult.hasIntersect) numHit++;
             }
 
@@ -115,8 +115,12 @@ __kernel void RARTrace(
                     baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
                     baseResult[offsets[queueTail]].rayType = REFRACT_TYPE;
                 }else{
+                    queueTail++;
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
-                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, -localResult.normal, 1.0f, 1.04f);
+                    float3 refractNormal = localResult.normal;
+                    if(dot(r.direction, refractNormal) > 0) refractNormal = -refractNormal;
+                    getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, refractNormal, 1.0f, material->refractiveIndex);
+                    baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
                     baseResult[offsets[queueTail]].rayType = REFRACT_TYPE;
                 }
             }

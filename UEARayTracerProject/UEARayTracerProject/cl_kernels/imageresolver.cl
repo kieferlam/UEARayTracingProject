@@ -191,11 +191,11 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
         // Iterate through stack (popping, so iterating through the array backwards)
         while(stackHead >= 0){
             RayTraceNode* currentNode = treeStack + stackHead;
-            
+
             TraceResult* result = localResults + currentNode->index;
             if(result->hasIntersect){
                 Material objectMaterial = materials[result->material];
-                float kr = fresnel(result->ray.direction, result->normal, AIR_REFRACTIVE_INDEX, 1.517f);
+                float kr = fresnel(result->ray.direction, result->normal, AIR_REFRACTIVE_INDEX, objectMaterial.refractiveIndex);
 
                 float daylight_cosine = 1.0f - max(dot(result->normal, daylight_direction), 0.0f) * DAYLIGHT_COSINE_STRENGTH;
                 uint shadowChildIndex = rar_getShadowChild(currentNode->index);
@@ -203,21 +203,23 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
 
                 // Calculate emission
                 float3 transmission = phong(result, &objectMaterial);
-                if(currentNode->refractIndex > -1) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity);
-
-                // Calculate shadows
-                if(shadowResult->hasTraced && shadowResult->hasIntersect){
-                    transmission *= 1.0f - (DAYLIGHT_SHADOW_STRENGTH * (1.0f - shadowResult->shadowSoftness) * materials[shadowResult->material].opacity);
-                }
+                if(currentNode->refractIndex > -1) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity-EPSILON*2.0f);
 
                 // Calculate reflection
                 float3 reflection = transmission;
                 if(currentNode->reflectIndex > -1) reflection = outputStack[currentNode->reflectChild];
-                
+
                 // Transform kr based on opacity
                 kr = mix(kr, 1.0f - kr, objectMaterial.opacity);
 
-                outputStack[currentNode->index] = transmission * (1.0f - kr) + reflection * kr;
+                float3 out = transmission * (1.0f - kr) + reflection * kr;
+
+                // Calculate shadows
+                if(shadowResult->hasTraced && shadowResult->hasIntersect){
+                    out *= 1.0f - (DAYLIGHT_SHADOW_STRENGTH * (1.0f - shadowResult->shadowSoftness) * materials[shadowResult->material].opacity);
+                }
+
+                outputStack[currentNode->index] = out;
             }else{
                 float3 sky = skybox_cubemap(imageConfig, skybox, result->ray.direction);
                 outputStack[currentNode->index] = sky;
@@ -227,6 +229,10 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
         }
 
         final = outputStack[0];
+    }
+
+    if(debug_isCenterPixel()){
+        final = (float3)(1.0f, 0.0f, 0.0f);
     }
 
     // Write colour
