@@ -1,11 +1,11 @@
 %\section{Class declaration}
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{cmpreport}[16/07/2019 v5.2 (Pierre Chardaire) Third year Project Reports]
+\ProvidesClass{cmpreport}[19/11/2019 v5.2 (Pierre Chardaire) Third year Project Reports]
 %
 % Base this class on KOMA script article class file
 % A 5mm binding is added to margin
 %
-\LoadClass[12pt,BCOR0.5cm,twoside=false]{scrartcl}
+\LoadClass[12pt,BCOR=0.5cm,twoside=false]{scrartcl}
 %
 %
 %
@@ -41,6 +41,12 @@
 % independently of the position of the caption command in the latex source
 %
 \RequirePackage{float}
+%\floatstyle{komabelow}
+%\restylefloat{figure}
+%\setlength{\abovecaptionskip}{5pt plus 2pt minus 2pt}
+%\floatstyle{komaabove}
+%\restylefloat{table}
+%\setlength{\belowcaptionskip}{5pt plus 2pt minus 2pt}
 %
 % KOMA-script package for headings
 %
@@ -69,6 +75,13 @@
 %
 \RequirePackage[justification=justified,singlelinecheck=false]{caption}
 %
+% Numbering of figures and table
+%
+%\RequirePackage{chngcntr}
+%\counterwithin{figure}{section}
+%\counterwithin{table}{section}
+%\counterwithin{equation}{section}
+%
 % Creation of better tables
 %
 \RequirePackage{array}
@@ -88,6 +101,7 @@
 \newcommand{\LL}{\RaggedRight}
 \newcommand{\RR}{\RaggedLeft}
 \newcommand{\CC}{\Centering}
+%
 %
 % As we don't want students to change the cmidrule weight we can make the option format 
 % more consistent
@@ -149,6 +163,7 @@
         {\multicolumn{#1}{R{#2}}{#3}}        
     }
 }
+%
 %
 % table with tablenotes
 %
@@ -308,7 +323,7 @@
 		\textbf{Student registration number: \@registration}
 		\\
 		\\
-		\InputIfFileExists{marksheetprogress.tex}{}{Missing marksheet}
+		\InputIfFileExists{marksheetprogress.tex}{}{\ClassError{cmpfinalreport}{marksheetprogress.tex missing}{}}
 		\restoregeometry
 		\clearpage    
 	    \let\default@color\current@color
@@ -317,8 +332,11 @@
 	    \let\maketitle\relax
 	} %\AtBeginDocument
 }
+
 %
 %
+%
+
 %
 \DeclareOption{proposal}{
     \newcommand*{\@worktitle}{Project proposal}
@@ -361,7 +379,10 @@
 	\let\maketitle\relax
 }
 \else
-\RequirePackage[-18,nonofiles]{pagesel}
+\IfFileExists{marksheetprogress.tex}{\RequirePackage[-21,nonofiles]{pagesel}}
+{
+{\Large Where is your marksheet \emph{marksheetprogress.tex}?}
+\RequirePackage[-1,nonofiles]{pagesel}}
 \fi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % headings
@@ -412,14 +433,15 @@
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Final report
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-    \RequirePackage[-58,nonofiles]{pagesel}
+    \RequirePackage[-55,nonofiles]{pagesel}
     \newcounter{oldpage}
     \renewcommand{\@maketitle}{%
     	
     	\thispagestyle{empty}
-    	\newgeometry{left=1cm,right=1cm,top=1cm,bottom=1cm}
-    	\restoregeometry
-    	\clearpage    
+    	%\newgeometry{left=1cm,right=1cm,top=1cm,bottom=1cm}
+    	%\InputIfFileExists{marksheetsfinal.tex}{}{Missing marksheet}
+    	%\restoregeometry
+    	%\clearpage    
     	\let\default@color\current@color
     	\setcounter{page}{1}    	
         \pagenumbering{roman}
@@ -482,6 +504,8 @@
         \setcounter{page}{\value{oldpage}}
       }
       \pagestyle{reportheadings}
+      %\pagestyle{plain}
+      \renewcommand{\baselinestretch}{1.3}
 \fi
 %
 %
