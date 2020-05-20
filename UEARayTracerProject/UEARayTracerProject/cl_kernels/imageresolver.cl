@@ -156,7 +156,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
         pushStack(treeStack, &stackHead, 0, 0);
 
         // Adding all rays to stack
-        while(iterHead < stackHead && iterHead >= 0){
+        while(iterHead <= stackHead){
             /**
             Conditions:
             Visit 1: Add reflect node
@@ -165,27 +165,21 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
             */
 
             RayTraceNode* currentNode = treeStack + iterHead;
-            currentNode->visit++;
 
-            if(currentNode->visit == REFLECT_TYPE){
-                uint reflectChildIndex = rar_getReflectChild(currentNode->index);
-                if(localResults[reflectChildIndex].hasTraced){ // Reflect child node
-                    // Add reflect trace to stack
-                    currentNode->reflectChild = reflectChildIndex;
-                    currentNode->reflectIndex = pushStack(treeStack, &stackHead, reflectChildIndex, REFLECT_TYPE);
-                    iterHead++;
-                }
-            }else if(currentNode->visit == REFRACT_TYPE){
-                uint refractChildIndex = rar_getRefractChild(currentNode->index);
-                if(localResults[refractChildIndex].hasTraced){
-                    // Add refract trace to stack
-                    currentNode->refractChild = refractChildIndex;
-                    currentNode->refractIndex = pushStack(treeStack, &stackHead, refractChildIndex, REFRACT_TYPE);
-                    iterHead++;
-                }
-            }else{
-                iterHead--;
+            uint reflectChildIndex = rar_getReflectChild(currentNode->index);
+            if(localResults[reflectChildIndex].hasTraced){ // Reflect child node
+                // Add reflect trace to stack
+                currentNode->reflectChild = reflectChildIndex;
+                currentNode->reflectIndex = pushStack(treeStack, &stackHead, reflectChildIndex, REFLECT_TYPE);
             }
+            uint refractChildIndex = rar_getRefractChild(currentNode->index);
+            if(localResults[refractChildIndex].hasTraced){
+                // Add refract trace to stack
+                currentNode->refractChild = refractChildIndex;
+                currentNode->refractIndex = pushStack(treeStack, &stackHead, refractChildIndex, REFRACT_TYPE);
+            }
+            
+            iterHead++;
         }
 
         // Iterate through stack (popping, so iterating through the array backwards)
@@ -203,7 +197,7 @@ __kernel void ResolveImage(__write_only image2d_t image, __constant RayConfig* c
 
                 // Calculate emission
                 float3 transmission = phong(result, &objectMaterial);
-                if(currentNode->refractIndex > -1) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity-EPSILON*2.0f);
+                if(currentNode->refractIndex > -1) transmission = mix(outputStack[currentNode->refractChild], transmission, objectMaterial.opacity);
 
                 // Calculate reflection
                 float3 reflection = transmission;

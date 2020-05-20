@@ -78,7 +78,7 @@ __kernel void RARTrace(
             if(material->reflectivity > EPSILON){
                 // Queue reflection ray
                 queueTail++;
-                offsets[queueTail] = rar_getReflectChild(offsets[i]);
+                offsets[queueTail] = rar_getReflectChild(rayOffset);
                 // Create ray
                 baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
                 getReflectDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, localResult.normal);
@@ -88,8 +88,8 @@ __kernel void RARTrace(
             
             // Add refractive ray
             if(material->opacity < 1.0f - EPSILON){
-                if(result->objectType == SPHERE_TYPE){ // Only trace exit ray if not triangle
-                    __constant Sphere* sphere = spheres + result->objectIndex;
+                if(localResult.objectType == SPHERE_TYPE){ // Only trace exit ray if not triangle
+                    __constant Sphere* sphere = spheres + localResult.objectIndex;
                     // Calculate internal ray direction
                     float3 internal_direction;
                     local_getRefractDirection(&internal_direction, r.direction, localResult.normal, AIR_REFRACTIVE_INDEX, material->refractiveIndex);
@@ -104,7 +104,7 @@ __kernel void RARTrace(
                     
                     // Get child ray
                     queueTail++;
-                    offsets[queueTail] = rar_getRefractChild(offsets[i]);
+                    offsets[queueTail] = rar_getRefractChild(rayOffset);
 
                     // Set exit ray origin
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect + internal_direction * internal_length;
@@ -116,8 +116,9 @@ __kernel void RARTrace(
                     baseResult[offsets[queueTail]].rayType = REFRACT_TYPE;
                 }else{
                     queueTail++;
+                    offsets[queueTail] = rar_getRefractChild(rayOffset);
                     baseResult[offsets[queueTail]].ray.origin = localResult.intersect; // Slightly refract the ray on infinitely small thickness
-                    float3 refractNormal = localResult.normal;
+                    float3 refractNormal = -localResult.normal;
                     if(dot(r.direction, refractNormal) > 0) refractNormal = -refractNormal;
                     getRefractDirection(&baseResult[offsets[queueTail]].ray.direction, r.direction, refractNormal, 1.0f, material->refractiveIndex);
                     baseResult[offsets[queueTail]].bounce = localResult.bounce + 1;
@@ -129,7 +130,7 @@ __kernel void RARTrace(
             if(material->opacity > EPSILON){
                 // Queue the ray
                 queueTail++;
-                offsets[queueTail] = rar_getShadowChild(offsets[i]);
+                offsets[queueTail] = rar_getShadowChild(rayOffset);
                 // Create shadow ray
                 baseResult[offsets[queueTail]].ray.origin = localResult.intersect;
                 baseResult[offsets[queueTail]].ray.direction = -daylight_direction; // Shadow ray should be cast towards light source

@@ -529,8 +529,8 @@ void benchmark_scene_spheres(int spheres) {
 }
 
 void benchmark_scene_model() {
-	float reflect = 0.0f;
-	float opacity = 1.0f;
+	float reflect = 1.0f;
+	float opacity = 0.0f;
 	int material = world.addMaterial({ { 0.6f, 0.7f, 0.8f }, 100.0f, reflect, opacity, 1.517f });
 
 	Model testModel;
@@ -568,7 +568,7 @@ int main(void) {
 	config.aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
 	config.width = WINDOW_WIDTH;
 	config.height = WINDOW_HEIGHT;
-	config.bounces = 0;
+	config.bounces = 2;
 
 	//testscene();
 	//reflection_scene();

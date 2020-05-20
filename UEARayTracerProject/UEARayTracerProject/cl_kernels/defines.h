@@ -21,7 +21,7 @@
 #define REFRACT_TYPE (2)
 #define SHADOW_TYPE (3)
 
-#define NUM_SHADOW_RAYS (16)
+#define NUM_SHADOW_RAYS (1)
 #define SHADOW_RAY_DIST (0.1f)
 
 #define BVH_PLANE_COUNT (7)
@@ -36,7 +36,7 @@
 
 #define print3f(v) printf("%f, %f, %f", v.x, v.y, v.z)
 
-//#define SKIP_DDA
+// #define SKIP_DDA
 
 // types
 typedef __constant unsigned char* SKYBOX;

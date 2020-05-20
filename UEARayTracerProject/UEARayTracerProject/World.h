@@ -10,8 +10,8 @@
 #define SQ(x) ((x)*(x)) 
 #define CUBE(x) ((x)*(x)*(x))
 
-#define GRID_CELL_DEPTH (1)
-#define GRID_MAX_TRIANGLES_PER_CELL (64) // MAKE SURE THIS IS A MULTIPLE OF 16
+#define GRID_CELL_DEPTH (4)
+#define GRID_MAX_TRIANGLES_PER_CELL (128) // MAKE SURE THIS IS A MULTIPLE OF 16
 
 inline constexpr int static_pow(const int base, const int exp) { return (exp == 0) ? 1 : base * static_pow(base, exp-1); }
 inline constexpr int static_numrays(const int numchildren, const int bounce) { return (1 - static_pow(numchildren, bounce + 1)) / (1-numchildren); }
