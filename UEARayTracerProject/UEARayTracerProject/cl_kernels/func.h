@@ -229,6 +229,9 @@ bool model_intersect(
     dda_origin += step * EPSILON;
 
     float3 invdir = 1.0f / ray->direction;
+    if(ray->direction.x == 0.0f) invdir.x = MAX_VALUE;
+    if(ray->direction.y == 0.0f) invdir.y = MAX_VALUE;
+    if(ray->direction.z == 0.0f) invdir.z = MAX_VALUE;
 
     float3 deltaT = fabs(cellSize * invdir);
 
