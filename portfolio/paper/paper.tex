@@ -25,6 +25,8 @@
 \usepackage{float}
 \usepackage[export]{adjustbox}
 \usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{graphicx}
 
 %\setkeys{Gin}{draft}
 
@@ -69,18 +71,11 @@
 
 
 \summary{
-This document explains how to use the class file \texttt{cmpreport.cls} to write your reports.
-The class file has been designed to simplify your life; many things are done for you. As a consequence
-some commands presented here are specific to the class file whether they are new commands or customized versions
-of commonly known \LaTeX\ commands.
+    Ray tracing is a rendering technique in computer graphics used for generating physically accurate images based on the behaviour of light rays in the physical world. While computationally intensive and time consuming, ray tracing is capable of achieving high visual quality results and is typically used in digital film or 3D modelling industries. As consumer graphics hardware improves, ray tracing may become a feasible approach for rendering graphics in applications that require real-time rendering such as video games. This project aims to achieve real-time performance on consumer graphics hardware with the ray tracing technique.
 }
 
 \acknowledgements{
-This section is used to acknowledge whoever's support and contribution.
-The command that introduces it is ignored in the project proposal, literature review and progress report. It is used in the
-final report,  but  is not compulsory. If you do not
-have an acknowledgements command in your preamble then there
-won't be any acknowledgement section in the document produced. \emph{Abstract} and \emph{Acknowledgements} sections should fit on the same page. 
+    Much gratitude and appreciation to my supervisor Dr Stephen Laycock and his helpful support and insight throughout the project. The extent of the project would fall short without his guidance, help, and feedback.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -256,7 +251,7 @@ Figure \ref{arch_design} shows a diagram of the implementation architecture desi
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/architecture_diagram.png}
+    \includegraphics[width=0.8\textwidth]{img/architecture_diagram.png}
     \caption{Diagram of the implementation architecture design}
     \label{arch_design}
 \end{figure}
@@ -284,7 +279,7 @@ The OpenCL C programming language, while based on C99, has some limitations due 
 
 Designing a kernel architecture for ray-tracing which takes advantage of multiple kernels is a non-trivial task. While a single monolithic kernel can be used to execute the whole process, from ray-tracing to image and colour processing, it is generally a better idea to separate parts of the process into individual kernels where independent code and relevant memory are isolated \citep{laine2013megakernels}. When code performing independent tasks are separated into individual kernels, the code base is generally more organised easier to refactor if needed. Another benefit is that having multiple kernels naturally encourages vectorisation in the processing of data instead of using branching inside a single kernel. The ray-tracer implementation uses two kernels, a kernel for tracing rays, and a separate kernel for processing the results of the trace and writing the produced colours to the image.
 
-The command queue allows kernels to be queued with $ND$ range where $ND$ represents the dimensions of the range (e.g. 3D for a three dimensional range) and in an $ND$ range kernel execution, each work-item is given $N$ ID's which correspond to the range. E.g. a $2D$ range of $3 \times 3$ will result in $9$ work-items executing the kernel with two ID's ($0, 1, 2$) in each dimension. During kernel execution, the work-item can query its global ID which can be used to access data in locations corresponding to its ID's.
+The command queue allows kernels to be queued with $ND$ range where $ND$ represents the dimensions of the range (e.g. 3D for a three dimensional range) and in an $ND$ range kernel execution, each work-item is given $N$ ID's which correspond to the range. E.g. a $2D$ range of $3 \times 3$ will result in $9$ work-items executing the kernel with two ID's ($0, 1, 2$) in each dimension. During kernel execution, the work-item can query its global ID which can be used to access data in locations corresponding to its ID's. \citep{barringer2017ray}
 
 \subsubsection{Ray Trace Kernel}
 % Write that the rays are generated here and traced (intersection test with world objects)
@@ -351,7 +346,7 @@ The ray direction is computed by simply taking the normalised vector of the came
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/backward_ray_tracing.png}
+    \includegraphics[width=0.8\textwidth]{img/backward_ray_tracing.png}
     \caption{Diagram of how primary rays are generated from the camera. \citep{henrikdia}}
 \end{figure}
 
@@ -359,11 +354,11 @@ The ray direction is computed by simply taking the normalised vector of the came
 % Write about generating reflection rays using the normal of primary ray result. Use pseudocode and diagram.
 % Mention secondary rays and recursion
 
-When a ray hits a surface and the surface material is reflective, a child ray for reflection is created. The origin of the reflection ray is the intersection point of its parent ray and the direction of computed by $$I - 2N(I \cdot N)$$ where $I$ is the parent ray direction, $N$ is the surface normal, and the dot represents the dot product. The result of the reflection ray will be mixed into the output result of its parent ray depending on the surface material. If a ray does not intersect with any object or the surface material is not reflective, a reflection ray is not generated. When a reflection ray intersects with an object, it may create a child ray of itself for another reflection ray depending on the bounce limit. The rays can be traced sequentially however the colour results must be computed in a recursive manner to be physically accurate.
+When a ray hits a surface and the surface material is reflective, a child ray for reflection is created. The origin of the reflection ray is the intersection point of its parent ray and the direction of computed by $$I - 2N(I \cdot N)$$ where $I$ is the parent ray direction, $N$ is the surface normal, and the dot represents the dot product. The result of the reflection ray will be mixed into the output result of its parent ray depending on the surface material. If a ray does not intersect with any object or the surface material is not reflective, a reflection ray is not generated. When a reflection ray intersects with an object, it may create a child ray of itself for another reflection ray depending on the bounce limit. The rays can be traced sequentially however the colour results must be computed in a recursive manner to be physically accurate \citep{de2006reflections}.
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/reflection_diagram.png}
+    \includegraphics[width=0.8\textwidth]{img/reflection_diagram.png}
     \caption{Diagram of how the reflection direction vector is computed. \citep{fitzpatrickreflect}}
 \end{figure}
 
@@ -453,6 +448,8 @@ $T_min$ and $T_max$ can be used to find the intersection points of the sphere. T
 
 While spheres are simple and quick, they are not the most versatile shape for complex objects. Any 3D model can be represented as a triangular mesh so a ray-triangle intersection test was also implemented. Triangle intersection tests are slower than sphere intersections and 3D models can have a performance crippling number of triangles to test however there are methods to reduce the number of triangles a ray needs to test for intersection.
 
+The algorithm implemented is based off a fast algorithm designed for minimal storage access and usage \citep{moller1997fast}.
+
 \begin{algorithm}[H]
     \SetAlgoLined
     \KwResult{True if ray intersects triangle, else false}
@@ -497,7 +494,7 @@ The resulting light output from all of the secondary rays must be mixed to gener
 % Basic shading/lighting
 % Include picture
 
-The base colour output from when a ray intersects with an object is computed using the Phong model where the surface material's ambient, diffuse, and specular values are used. If the material is not reflective, completely opaque, and not in shadow, this will be the colour output for the ray. While not completely physically accurate, it provides a rough estimate of the shading and lighting of the object and is relatively fast \citep{bishop1986fast}. The Phong output will be combined with the other child ray outputs if the surface material allows it which may produce a better result. Algorithm \nameref{phongalgo} is used to compute the Blinn-phong colour output in the kernel \citep{blinn1977models} which is a faster Phong approximation algorithm and can be more accurate in some cases.
+The base colour output from when a ray intersects with an object is computed using the Phong model where the surface material's ambient, diffuse, and specular values are used. If the material is not reflective, completely opaque, and not in shadow, this will be the colour output for the ray. While not completely physically accurate, it provides a rough estimate of the shading and lighting of the object and is relatively fast \citep{bishop1986fast}. The Phong output will be combined with the other child ray outputs if the surface material allows it which may produce a better result. Algorithm \nameref{phongalgo} is used to compute the Blinn-phong colour output in the kernel \citep{blinn1977models} which is a faster Phong approximation algorithm and can be more accurate in some cases. \citep{shading}
 
 \begin{algorithm}
     \label{phongalgo}
@@ -524,7 +521,7 @@ Figure \ref{phong_img} shows a non-reflective and opaque object in the scene wit
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/phong.png}
+    \includegraphics[width=0.8\textwidth]{img/phong.png}
     \caption{Sphere with Phong shading}
     \label{phong_img}
 \end{figure}
@@ -551,30 +548,34 @@ Figure \ref{spheres_refractive_index} shows a lineup of transparent spheres with
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/reflection.png}
-    \caption{Sphere with reflective material}
-    \label{sphere_reflect}
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/reflection.png}
+        \caption{Sphere with reflective material}
+        \label{sphere_reflect}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/refraction_solid.png}
+        \caption{Sphere with transparent material with refractive index 1.517}
+        \label{sphere_refract_solid}
+    \end{subfigure}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/refraction_solid.png}
-    \caption{Sphere with transparent material with refractive index 1.517}
-    \label{sphere_refract_solid}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/refraction_hollow.png}
-    \caption{Sphere with transparent material with refractive index 1.04}
-    \label{sphere_refract_hollow}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/refractive_index.png}
-    \caption{Spheres with increasing refractive index ranging from 1.0 -> 1.7}
-    \label{spheres_refractive_index}
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/refraction_hollow.png}
+        \caption{Sphere with transparent material with refractive index 1.04}
+        \label{sphere_refract_hollow}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/refractive_index.png}
+        \caption{Spheres with increasing refractive index ranging from 1.0 -> 1.7}
+        \label{spheres_refractive_index}
+    \end{subfigure}
 \end{figure}
 
 \subsubsection{Fresnel}
@@ -605,16 +606,18 @@ For accurate results, a transparent material such as glass should use a mix of b
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/fresnel_solid.png}
-    \caption{Transparent sphere with refractive index 1.517 with fresnel effect}
-    \label{fresnel_solid}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/fresnel_hollow.png}
-    \caption{Transparent sphere with refractive index 1.04 with fresnel effect}
-    \label{fresnel_hollow}
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/fresnel_solid.png}
+        \caption{Transparent sphere with refractive index 1.517 with fresnel effect}
+        \label{fresnel_solid}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/fresnel_hollow.png}
+        \caption{Transparent sphere with refractive index 1.04 with fresnel effect}
+        \label{fresnel_hollow}
+    \end{subfigure}
 \end{figure}
 
 \subsubsection{Shadows}
@@ -637,22 +640,23 @@ When only using a few extra shadow rays, the soft shadow effect only gives it a 
 Figures \ref{softish_shadow} and \ref{soft_shadow} show the shadow with varying level for softness.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/hard_shadow.png}
-    \caption{Sphere casting a hard shadow on a surface}
-    \label{hard_shadow}
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/hard_shadow.png}
+        \caption{Sphere casting a hard shadow on a surface}
+        \label{hard_shadow}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/softish_shadow.png}
+        \caption{Shadow with anti-aliasing}
+        \label{softish_shadow}
+    \end{subfigure}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{img/softish_shadow.png}
-    \caption{Shadow with anti-aliasing}
-    \label{softish_shadow}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/soft_shadow.png}
+    \includegraphics[width=0.8\textwidth]{img/soft_shadow.png}
     \caption{Sphere casting a soft shadow on a surface}
     \label{soft_shadow}
 \end{figure}
@@ -694,7 +698,16 @@ There are some simple checks that can be performed for objects with large number
 % Show some pictures of the bounding volume
 % Include some code for how the bounding volume is generated
 
-Bounding volumes work similar to AABB, checking for overlaps in the bounds of the $X, Y, Z$ axis. Bounding volumes aim to achieve closer bounds to the convex hull while still being computationally inexpensive. This is achieved by using the $X, Y, Z$ axis and an additional $4$ axis which cut the bounds in the diagonal. The axis are defined by: $(S, S ,S), (-S, S ,S), (-S, -S, S), (S, -S, S)$ where $S$ is defined by $\frac{\sqrt{3}}{3}$.
+Bounding volumes work similar to AABB, checking for overlaps in the bounds of the $X, Y, Z$ axis. Bounding volumes aim to achieve closer bounds to the convex hull while still being computationally inexpensive. This is achieved by using the $X, Y, Z$ axis and an additional $4$ axis which cut the bounds in the diagonal. The axis are defined by: $(S, S ,S), (-S, S ,S), (-S, -S, S), (S, -S, S)$ where $S$ is defined by $\frac{\sqrt{3}}{3}$. The axis bounds minimum and maximum (near and far) are computed during the OBJ loading on the host side and are included in the model struct in a buffer passed to the kernels. To check for overlap between a ray and the bounding volume, the near and far points of the bounding volume axis are computed in real-time and a simple overlap check can be done with the precomputed model bounds.
+
+Figure \ref{bvimage} shows the bounding volume around a 3D model.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/bounding_volume.png}
+    \caption{Left: rendered model, Right: bounding volume only}
+    \label{bvimage}
+\end{figure}
 
 \subsubsection{Grid}
 % Write that an efficient algorithm of stepping through a grid
@@ -702,8 +715,11 @@ Bounding volumes work similar to AABB, checking for overlaps in the bounds of th
 % Write how the grid is generated on Host side (CPU side) where an octree is generated first to accelerate the grid generation with the model to improve load times
 % Where only the bottom level leaf nodes are added to the grid
 
-\subsubsection{Bounding Volume Hierarchy}
-% TODO
+To reduce number of triangle intersection tests between a ray and a 3D model when the preliminary checks pass, the model is split up into a grid where each cell in the grid contains the triangles that are completely or partly inside the cell. The ray need only run the ray-triangle intersection tests with the triangles in the cell.
+
+The grid is generated on the host side when the model is loaded by creating an octree for the model and adding the bottom level octree nodes to a grid where each grid cell is the same size as the bottom level octree cells. Initially, the host would simply create the grid and run triangle-box intersections to compute which triangles belong to which cell however this brute force approach takes up a lot of time during the initilisation phase. Because of this, an octree was created and a grid was created from the bottom level leaf nodes improving loading times.
+
+To determine which grid cells the ray needs to traverse through, a DDA (Digital Differential Analyser) algorithm was used in the kernel which steps through the cells and runs the ray-triangle intersection tests only on the triangles in the cells. The way DDA determines which cells a ray should traverse through is by stepping through the adjacent cells in a particular order until the edge or end cell is reached. Simply, the algorithm will compute the starting cell based on the position of the ray origin and direction and determine which neighbouring cell to traverse to next which can be computed using the ray slope (direction) and where the ray intersects the cell boundary. The full DDA implementation can be found in the `func.h' file under the \textit{model\_intersect} function. The implementation is based off a slightly modified algorithm designed for GPGPU's by slightly better vectorising the algorithm and reducing the number of branches \citep{3ddda} \citep{agate1991hero}.
 
 \section{Results and Testing}
 % To test the real-time performance
@@ -711,29 +727,242 @@ Bounding volumes work similar to AABB, checking for overlaps in the bounds of th
 % To show and test how effective the individual acceleration structures are
 % To show how the performance varies between different hardware
 
-\subsection{Ray Intersection Tests}
-% Write how the ray intersection tests are executed the most and so should take the most time during the performance profiling.
-% Use min max avg
+To test and observe the real-time capabilities of the implementation, the different kernels were benchmarked by getting the current elapsed time since program start when the kernel is queued, waiting for the kernel event to finish (this is achieved using the OpenCL wait commands), and then finding the elapsed time between the kernel being queued and finishing which is possible due to the fact that the OpenCL wait command is blocking. The elapsed time is added to a list which is inputted to a spreadsheet so an average can be found an graphed with other results. Camera movement is disabled during the benchmark so that the experiment is not affected by human interaction which may affect the elapsed time as the camera could be pointed towards an empty part of the scene. After 60 seconds, the experiment is stopped and the list of timings is saved to a file ready for processing in a spreadsheet.
+
+Different variables and parameters are changed between tests to observe a correlation is present and identify which areas of the process take time and see potential room for improvement. Some features were also tested on/off such as the acceleration structures so the effectiveness can be measured. With access to other machines, the varying performance can be also measured with different hardware.
+
+The development and testing setup used an \textit{AMD Ryzen 7 1700} processor and an \textit{AMD RX 480 4GB} graphics processor.
 
 \subsubsection{Ray Tracing with no objects}
 % Show performance and ray trace time for no objects as a baseline result
 
+For a baseline reference, an empty scene with just the background sky was timed as a reference point for the rest of the experiments. The events taken place during this experiment would include the operations that are performed in every scene such as ray generation and writing to the image etc.
+
+Over a 60 second average, the trace kernel takes 0.0125 seconds to execute while the image kernel takes 0.0028 seconds; in total: 0.0154 seconds which is roughly 65 complete renders per second.
+
 \subsubsection{Ray Tracing Spheres}
 % Show performance of spheres with varying number of spheres
+
+Next, the performance of spheres were tested by using a random number generator with a fixed seed to set the spheres position in front of the camera. The seed of the random number generator must be kept the same so that multiple runs of the same configuration would produce the same results and sphere positions as the performance is largely affected by the actual screen space occupied by objects. The scene was benchmarked varying the number of spheres to observe the performance impact of spheres in the scene. The expectation was that the elapsed time would increase with a higher quantity of spheres however the impact should be less than triangles as the intersection test code for spheres appear smaller and use less computation heavy operations.
+
+Along with varying the quantity of spheres, the material used on each sphere was also varied from plain colours, reflective (mirror), and transparent (refraction). The material should also affect the performance of both the image kernel and the ray tracer kernel as the kernels act differently based on these factors.
+
+The figures below show the correlation between the number of spheres and the elapsed time for each kernel. As expected, the elapsed runtime for each kernel generally increases with the number of objects in the scene. Interestingly, at a low quantity of spheres (around < 50), there elapsed time is not affected much which suggests the impact of the spheres is less than the general ray tracing operations that happen independent of the objects in the scene.
+
+Figure \ref{graphspheresfps} show a comparison of the average number of renders per second with each of the different material types. The graph suggests that overall the reflective material performs the best out of the materials with the refraction rays impacting performance the most. This may make sense considering that while Phong is fast, it is more processing than simply querying the background colour which is what happens with reflection.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/benchmark_phong.png}
+        \caption{Sample benchmark image of many spheres with random positions using a plain colour non-reflective opaque material}
+        \label{benchspherephong}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/benchmark_reflect.png}
+        \caption{Sample benchmark image of many spheres with random positions using a reflective opaque material imitating mirrored surfaces}
+        \label{benchspherereflect}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.49\textwidth]{img/benchmark_refract.png}
+    \caption{Sample benchmark image of many spheres with random positions using a reflective transparent material imitating glass}
+    \label{benchsphererefract}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Trace Kernel Timings Number of Solid Spheres vs. Process Time.png}
+        \caption{Graph of trace kernel process time against number of spheres with plain colour spheres}
+        \label{graphsolidspheres}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Trace Timings Process Time vs. Number of Reflective Spheres.png}
+        \caption{Graph of trace kernel process time against number of spheres with reflective spheres}
+        \label{graphreflectspheres}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Trace Timings Process Time vs. Number of Refractive Spheres.png}
+        \caption{Graph of trace kernel process time against number of spheres with transparent spheres}
+        \label{graphglasssphere}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Image Kernel Timings Process Time vs. Number of Solid Spheres.png}
+        \caption{Graph of image kernel process time against number of spheres with plain colour spheres}
+        \label{graphsolidspheresimagekernel}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Image Timings Process Time vs. Number of Reflective Spheres.png}
+        \caption{Graph of image kernel process time against number of spheres with reflective spheres}
+        \label{graphreflectspheresimagekernel}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Image Timings Process Time vs. Number of Refractive Spheres.png}
+        \caption{Graph of image kernel process time against number of spheres with transparent spheres}
+        \label{graphglasssphereimagekernel}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Total Timing Process Time vs. Number of Solid Spheres.png}
+        \caption{Graph of total process time against number of spheres with plain colour spheres}
+        \label{graphsolidspheretotal}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Total Timing Process Time vs. Number of Reflective Spheres.png}
+        \caption{Graph of total process time against number of spheres with reflective spheres}
+        \label{graphreflectspheretotal}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Total Timing Process Time vs. Number of Refractive Spheres.png}
+        \caption{Graph of total process time against number of spheres with transparent spheres}
+        \label{graphglassspheretotal}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Total Timing FPS vs. Number of Solid Spheres.png}
+        \caption{Graph of average FPS against number of spheres with plain colour spheres}
+        \label{graphsolidspherefps}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Total Timing FPS vs. Number of Reflective Spheres.png}
+        \caption{Graph of average FPS against number of spheres with reflective spheres}
+        \label{graphreflectspheresfps}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Average FPS across all sphere types Process Time vs. Number of Spheres.png}
+        \caption{Graph of average FPS against number of spheres with all types of spheres}
+        \label{graphspheresfps}
+    \end{subfigure}
+\end{figure}
 
 \subsubsection{Ray Tracing Triangles}
 % Show performance with varying number of triangles in the form of models
 
+To show the impact of triangles, a scene with a single 3D model with varying number of triangles was benchmarked. To keep the sceen space occupation consistent, the same model was used with faces reduced in the Blender 3D modelling program so that the shape of the model stayed the same except fewer faces. The experiment was run with the grid acceleration structure turned off as the purpose of the experiment was to observe the impact in performance for the ray-triangle intersection tests.
+
+Compared to spheres, the triangle results graphs appeared to have a slightly steeper slope however the overall timings were lower which can be explained by the fact that the model takes up less screen space than the spheres experiment. This is acceptable as the main purpose of the triangle tests are for comparison with the grid acceleration structure.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/model_diffuse.png}
+        \caption{Example image of the model that was tested in a plain colour material}
+        \label{egimgmodeldiffuse}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/model_reflect.png}
+        \caption{Example image of the model that was tested in a reflective material}
+        \label{egimgmodelreflect}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/model_reduced.png}
+    \caption{Image showing the model without reduction in faces on top and the models with reduced faces on bottom with different materials}
+    \label{modelreduced}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/Trace Timing Process Time vs. Number of Triangles.png}
+        \caption{Graph of trace kernel process time against number of triangles}
+        \label{graphtracetri}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/Image Timing Process Time vs. Number of Triangles.png}
+        \caption{Graph of image kernel process time against number of triangles}
+        \label{graphimagetri}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/Total Timing Process Time vs. Number of Triangles.png}
+        \caption{Graph of total kernel process time against number of triangles}
+        \label{graphtotaltri}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{img/Average FPS across triangle materials FPS vs. Number of Triangles.png}
+        \caption{Graph of average FPS against number of triangles across all material types}
+        \label{graphfpstri}
+    \end{subfigure}
+\end{figure}
+
 \subsubsection{Acceleration Structures}
 % Show performance difference with the models but with acceleration structures
 
-\subsection{Resolution}
-% Test performance with resolution
-% Note how less resolution means less primary rays
+The grid acceleration structure was tested with varying octree depths to observe how much of an impact it has and how much the size of the grid cells affects performance. The grid cell size is directly linked to a models bounds and is determined by how many grid cells span across the model. The number of grid cells across an axis of a models bounds is determined by $2^D$ where $D$ is the depth of the octree. Therefore, a depth level of 0 would only have a single cell covering the entire bounds of the model which is the same as not using the grid structure. Varying the depth meant the ray should generally run fewer ray-triangle tests however there is the added overhead of traversing through the cells via DDA.
 
-% Overall write about the effectiveness of acceleration structures and that they make the most difference
-% Explain that there is a correlation (inverse) between the performance and number of objects on the screen
-% Which obviously there is a direct correlation between number of intersection tests and objects on the screen
+Figure \ref{graphimagedda} shows little variance in timing with the octree depth which agrees with expectation as the image kernel only deals with what has already been traced and is typically mostly impacted by screen space occupation. However, figure \ref{graphtracedda} shows a trend in higher performance with increasing depth with diminishing improvements. There also seems to be a point where increasing the depth no longer improves performance but negatively impacts performance instead. This is most likely because the extra overhead in DDA traversal outweighs the benefit from reduced intersection tests. Figure \ref{graphfpsdda} supports this observation as with initial improvement in performance, the trend flattens and trends downwards after a certain depth level.
+
+Even with the extra overhead, the results show a large success in the grid acceleration structure as with an appropriate depth level, it showed a improvement of over $4\times$ in the number of renders per second.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Trace Timing Process Time vs. DDA Octree Depth.png}
+        \caption{Graph of trace kernel timing with varying octree depth}
+        \label{graphtracedda}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/Image Timing Process Time vs. Octree Depth.png}
+        \caption{Graph of trace kernel timing with varying octree depth}
+        \label{graphimagedda}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/Average FPS vs. Octree Depth.png}
+    \caption{Graph of average FPS against octree depth}
+    \label{graphfpsdda}
+\end{figure}
 
 \section{Future Work}
 % Write about how a lot more work can be done to improve real-time performance including more efficient algorithms of detecting different shapes instead of relying on triangles only for complex shapes and models
@@ -746,11 +975,21 @@ Bounding volumes work similar to AABB, checking for overlaps in the bounds of th
 % And OpenCL implementations are different depending on vendor and machine. So that kernel code on one machine behaved differently on another machine (AMD vs Intel). Solution to this may be to use a standard with only 1 vendor (CUDA, RTX) or a newer standard (Vulkan) or (Radeon Open Compute ROCm) which has active developers and better tools however only available on Linux.
 % All of the above have pros and cons like platform independence.
 
+More work can be done to improve real-time performance including improving the intersection algorithms to better suit GPGPU parallelisation by vectorising parameters as much as possible to reduce branching however this would require more research specifically on vectorising those algorithms. Adding more ray-primitive intersection tests may also be benficial by reducing the number of triangles in a model (e.g. a quad, represented by two triangles can be tested as a single quad).
+
+Another improvement could be made in the kernel architecture by spreading the workload onto the work-groups and its work-items more efficiently as rays in a work-item that pass the preliminary checks and bounding volume checks do a lot more work that the work-items with a ray that just hits the background and terminates. In most devices, there are a smaller number of work-items and work-groups than the number of primary rays so the work-item ray distribution could also be improved to achieve more stable performance.
+
+There can also be more work done to improve visual quality of the image. Some features listed in the literature review were not implemented due to time constraints such as global illumination, ambient occlusion, and anti-aliasing.
+
+During development, there were limitations caused by vendors as the OpenCL development tools that used to be provided by AMD for AMD GPU's were removed from their website (AMD APP SDK) and support for OpenCL debugging tools for Windows 10 were deprecated. Instead, AMD only provided the header files for development. This impediment was experience heavily during the development of the implementation in this project as debugging OpenCL kernels became limited to using print statements in the kernel code and using branching to isolate a single work-item. Moreover, AMD's implementation of the print statement, possibly only on the specific device used (\textit{AMD RX 480}), was determined to be buggy as it produced unexpected behaviours when using multiple print statements in a single work-item. The issues included printing an unformatted version of the input string even when the control flow did not reach its branch.
+
+OpenCL implementations also vary slightly between vendors and devices which makes it harder to develop for general use on any OpenCL capable device. A solution may be to port the project to a standard with only one vendor such as \textit{Nvidia CUDA or RTX}, a newer standard such as \textit{Vulkan}, or AMD's Radeon Open Compute platform (\textit{ROCm}) which is only supported on Linux. All of this alternatives have their own advantages and disadvantages such as platform independence or lack of support on different devices.
+
 \section{Conclusion}
 % Write about the importance of acceleration structures
 % Write how ray tracing would be a viable approach to producing high visual quality and physically realistic visual effects like reflection and refraction and lighting
 
-\nocite{*}
+In conclusion, acceleration structures significantly contribute in making the ray tracer perform in real-time for a 3D model with a large quantity of triangles. Most of the processing is in tracing rays which includes intersection tests so reducing the number of intersections would be the primary objective in improving performance (thus real-time). Ray-tracing is a viable approach in producing high visual fidelity and physically realistic visuals for effects such as reflection, refraction, and realistic lighting in real-time.
 
 \newpage
 \bibliography{paper}

@@ -47,20 +47,17 @@
 \contentsline {subsubsection}{\numberline {3.5.1}Phong Model}{30}{subsubsection.3.5.1}%
 \contentsline {subsubsection}{\numberline {3.5.2}Transmission \& Reflection}{30}{subsubsection.3.5.2}%
 \contentsline {subsubsection}{\numberline {3.5.3}Fresnel}{32}{subsubsection.3.5.3}%
-\contentsline {subsubsection}{\numberline {3.5.4}Shadows}{38}{subsubsection.3.5.4}%
-\contentsline {subsubsection}{\numberline {3.5.5}Combining Secondary Rays}{38}{subsubsection.3.5.5}%
-\contentsline {subsection}{\numberline {3.6}Acceleration Structures}{41}{subsection.3.6}%
-\contentsline {subsubsection}{\numberline {3.6.1}Preliminary Checks}{41}{subsubsection.3.6.1}%
-\contentsline {subsubsection}{\numberline {3.6.2}Bounding Volumes}{42}{subsubsection.3.6.2}%
-\contentsline {subsubsection}{\numberline {3.6.3}Grid}{42}{subsubsection.3.6.3}%
-\contentsline {subsubsection}{\numberline {3.6.4}Bounding Volume Hierarchy}{42}{subsubsection.3.6.4}%
-\contentsline {section}{\numberline {4}Results and Testing}{42}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Ray Intersection Tests}{42}{subsection.4.1}%
-\contentsline {subsubsection}{\numberline {4.1.1}Ray Tracing with no objects}{42}{subsubsection.4.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.2}Ray Tracing Spheres}{42}{subsubsection.4.1.2}%
-\contentsline {subsubsection}{\numberline {4.1.3}Ray Tracing Triangles}{42}{subsubsection.4.1.3}%
-\contentsline {subsubsection}{\numberline {4.1.4}Acceleration Structures}{42}{subsubsection.4.1.4}%
-\contentsline {subsection}{\numberline {4.2}Resolution}{42}{subsection.4.2}%
-\contentsline {section}{\numberline {5}Future Work}{42}{section.5}%
-\contentsline {section}{\numberline {6}Conclusion}{42}{section.6}%
-\contentsline {section}{References}{43}{section*.35}%
+\contentsline {subsubsection}{\numberline {3.5.4}Shadows}{34}{subsubsection.3.5.4}%
+\contentsline {subsubsection}{\numberline {3.5.5}Combining Secondary Rays}{36}{subsubsection.3.5.5}%
+\contentsline {subsection}{\numberline {3.6}Acceleration Structures}{36}{subsection.3.6}%
+\contentsline {subsubsection}{\numberline {3.6.1}Preliminary Checks}{37}{subsubsection.3.6.1}%
+\contentsline {subsubsection}{\numberline {3.6.2}Bounding Volumes}{37}{subsubsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.3}Grid}{37}{subsubsection.3.6.3}%
+\contentsline {section}{\numberline {4}Results and Testing}{39}{section.4}%
+\contentsline {subsubsection}{\numberline {4.0.1}Ray Tracing with no objects}{39}{subsubsection.4.0.1}%
+\contentsline {subsubsection}{\numberline {4.0.2}Ray Tracing Spheres}{40}{subsubsection.4.0.2}%
+\contentsline {subsubsection}{\numberline {4.0.3}Ray Tracing Triangles}{40}{subsubsection.4.0.3}%
+\contentsline {subsubsection}{\numberline {4.0.4}Acceleration Structures}{44}{subsubsection.4.0.4}%
+\contentsline {section}{\numberline {5}Future Work}{47}{section.5}%
+\contentsline {section}{\numberline {6}Conclusion}{48}{section.6}%
+\contentsline {section}{References}{49}{section*.46}%

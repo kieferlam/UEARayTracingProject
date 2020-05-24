@@ -390,47 +390,38 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/t1phv.fd
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvr8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/courier/pcrr8t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omlztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omlztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omxztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omxztmcm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ptm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ptm.fd
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/helvetic/phvb8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/courier/pcrr8t.vf
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmr8t.vf
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmri8t.vf
-INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.toc
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.toc
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omlztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omlztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omsztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omxztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/omxztmcm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmro8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmro8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmro8r.tfm
@@ -455,6 +446,7 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.t
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7m.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/psyro.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmmi10.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
@@ -466,12 +458,16 @@ INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7y.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/rsfs/rsfs10.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmri8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/zptmcm7v.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/symbol/psyr.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmri8t.vf
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/architecture_diagram.png
@@ -486,10 +482,13 @@ INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfo
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection_diagram.png
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb8t.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/courier/pcrr8t.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmb8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmb8t.vf
 INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/courier/pcrr8t.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/shadow_diagram.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/shadow_diagram.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/shadow_diagram.png
@@ -499,6 +498,7 @@ INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfo
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/reflection.png
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8t.tfm
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refraction_solid.png
@@ -508,6 +508,8 @@ INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfo
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/refractive_index.png
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/vf/adobe/times/ptmr8t.vf
+INPUT c:/Program Files/texlive/2019/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/fresnel_solid.png
@@ -531,6 +533,84 @@ INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfo
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/soft_shadow.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/bounding_volume.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/bounding_volume.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/bounding_volume.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_phong.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_refract.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_refract.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/benchmark_refract.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Kernel Timings Number of Solid Spheres vs. Process Time.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Kernel Timings Number of Solid Spheres vs. Process Time.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Kernel Timings Number of Solid Spheres vs. Process Time.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Kernel Timings Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Kernel Timings Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Kernel Timings Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timings Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Refractive Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Solid Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing FPS vs. Number of Reflective Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across all sphere types Process Time vs. Number of Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across all sphere types Process Time vs. Number of Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across all sphere types Process Time vs. Number of Spheres.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_diffuse.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_diffuse.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_diffuse.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reflect.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reduced.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reduced.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/model_reduced.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Total Timing Process Time vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across triangle materials FPS vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across triangle materials FPS vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS across triangle materials FPS vs. Number of Triangles.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. DDA Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. DDA Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Trace Timing Process Time vs. DDA Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Image Timing Process Time vs. Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS vs. Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS vs. Octree Depth.png
+INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/img/Average FPS vs. Octree Depth.png
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.bbl
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.bbl
 INPUT d:/Dropbox/University/UEA/CFS Documents/Year 3/Project/Project_root/portfolio/paper/paper.aux
